@@ -1,26 +1,33 @@
-PS E:\Masters-phishD> .\install_prerequisites.ps1
-[INFO]  Checking Python version...
-[INFO]  Using Python 3.10 (python3.10)
-[INFO]  Creating virtual environment at E:\Masters-phishD\.venv ...
-Traceback (most recent call last):
-  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.10_3.10.3056.0_x64__qbz5n2kfra8p0\lib\runpy.py", line 196, in _run_module_as_main
-    return _run_code(code, main_globals, None,
-  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.10_3.10.3056.0_x64__qbz5n2kfra8p0\lib\runpy.py", line 86, in _run_code
-    exec(code, run_globals)
-  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.10_3.10.3056.0_x64__qbz5n2kfra8p0\lib\venv\__main__.py", line 6, in <module>
-    main()
-  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.10_3.10.3056.0_x64__qbz5n2kfra8p0\lib\venv\__init__.py", line 516, in main
-    builder.create(d)
-  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.10_3.10.3056.0_x64__qbz5n2kfra8p0\lib\venv\__init__.py", line 75, in create
-    self._setup_pip(context)
-  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.10_3.10.3056.0_x64__qbz5n2kfra8p0\lib\venv\__init__.py", line 328, in _setup_pip
-    self._call_new_python(context, '-m', 'ensurepip', '--upgrade',
-  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.10_3.10.3056.0_x64__qbz5n2kfra8p0\lib\venv\__init__.py", line 324, in _call_new_python
-    subprocess.check_output(args, **kwargs)
-  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.10_3.10.3056.0_x64__qbz5n2kfra8p0\lib\subprocess.py", line 421, in check_output
-    return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,
-  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.10_3.10.3056.0_x64__qbz5n2kfra8p0\lib\subprocess.py", line 505, in run
-    stdout, stderr = process.communicate(input, timeout=timeout)
-  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.10_3.10.3056.0_x64__qbz5n2kfra8p0\lib\subprocess.py", line 1141, in communicate
-    stdout = self.stdout.read()
-KeyboardInterrupt
+PS E:\Masters-phishD> .\run_experiment.ps1 --agent binary --batch-size 5 --dry-run
+Split created: 5953 RAG emails, 23814 test emails → results\split.json
+[DRY RUN] [binary] Running batch of 5 (0 done, 23809 remaining after this batch)
+  0%|                   | 0/5 [00:00<?, ?it/s]  TRUE: legitimate  PRED: phishing  CONF: 0.80
+ 20%|██▏        | 1/5 [00:08<00:34,  8.58s/it]  TRUE: legitimate  PRED: phishing  CONF: 0.80
+ 40%|████▍      | 2/5 [00:10<00:13,  4.53s/it]  TRUE: legitimate  PRED: phishing  CONF: 0.80
+ 60%|██████▌    | 3/5 [00:11<00:06,  3.20s/it]  TRUE: legitimate  PRED: phishing  CONF: 0.80
+ 80%|████████▊  | 4/5 [00:13<00:02,  2.52s/it]  TRUE: legitimate  PRED: phishing  CONF: 0.80
+100%|███████████| 5/5 [00:14<00:00,  2.99s/it]
+
+[DRY RUN] Batch accuracy: 0.0000
+E:\Masters-phishD\.venv\lib\site-packages\sklearn\metrics\_classification.py:1731: UndefinedMetricWarning: Precision is ill-defined and being set to 0.0 in labels with no predicted samples. Use `zero_division` parameter to control this behavior.
+  _warn_prf(average, modifier, f"{metric.capitalize()} is", result.shape[0])
+E:\Masters-phishD\.venv\lib\site-packages\sklearn\metrics\_classification.py:1731: UndefinedMetricWarning: Recall is ill-defined and being set to 0.0 in labels with no true samples. Use `zero_division` parameter to control this behavior.
+  _warn_prf(average, modifier, f"{metric.capitalize()} is", result.shape[0])
+E:\Masters-phishD\.venv\lib\site-packages\sklearn\metrics\_classification.py:1731: UndefinedMetricWarning: Precision is ill-defined and being set to 0.0 in labels with no predicted samples. Use `zero_division` parameter to control this behavior.
+  _warn_prf(average, modifier, f"{metric.capitalize()} is", result.shape[0])
+E:\Masters-phishD\.venv\lib\site-packages\sklearn\metrics\_classification.py:1731: UndefinedMetricWarning: Recall is ill-defined and being set to 0.0 in labels with no true samples. Use `zero_division` parameter to control this behavior.
+  _warn_prf(average, modifier, f"{metric.capitalize()} is", result.shape[0])
+E:\Masters-phishD\.venv\lib\site-packages\sklearn\metrics\_classification.py:1731: UndefinedMetricWarning: Precision is ill-defined and being set to 0.0 in labels with no predicted samples. Use `zero_division` parameter to control this behavior.
+  _warn_prf(average, modifier, f"{metric.capitalize()} is", result.shape[0])
+E:\Masters-phishD\.venv\lib\site-packages\sklearn\metrics\_classification.py:1731: UndefinedMetricWarning: Recall is ill-defined and being set to 0.0 in labels with no true samples. Use `zero_division` parameter to control this behavior.
+  _warn_prf(average, modifier, f"{metric.capitalize()} is", result.shape[0])
+              precision    recall  f1-score   support
+
+  legitimate     0.0000    0.0000    0.0000       5.0
+    phishing     0.0000    0.0000    0.0000       0.0
+
+    accuracy                         0.0000       5.0
+   macro avg     0.0000    0.0000    0.0000       5.0
+weighted avg     0.0000    0.0000    0.0000       5.0
+
+[DRY RUN] Nothing written to disk.
