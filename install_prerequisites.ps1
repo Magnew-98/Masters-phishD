@@ -43,8 +43,25 @@ if ((Test-Path $VenvDir) -and (-not (Test-Path $VenvPip))) {
 
 if (-not (Test-Path $VenvDir)) {
     Write-Info "Creating virtual environment at $VenvDir ..."
-    & $PythonBin -m venv $VenvDir
-    if ($LASTEXITCODE -ne 0) { Write-Err "Failed to create venv"; exit 1 }
+
+    # Windows Store Python sandboxes ensurepip subprocess calls and hangs.
+    # Detect it by checking if the resolved executable path is under WindowsApps.
+    $resolvedPython = & $PythonBin -c "import sys; print(sys.executable)" 2>$null
+    $isStorePython  = $resolvedPython -match 'WindowsApps'
+
+    if ($isStorePython) {
+        Write-Warn "Windows Store Python detected - using --without-pip workaround..."
+        & $PythonBin -m venv --without-pip $VenvDir
+        if ($LASTEXITCODE -ne 0) { Write-Err "Failed to create venv"; exit 1 }
+        Write-Info "Bootstrapping pip via get-pip.py..."
+        $getPipPath = Join-Path $env:TEMP "get-pip.py"
+        Invoke-WebRequest -Uri "https://bootstrap.pypa.io/get-pip.py" -OutFile $getPipPath -UseBasicParsing
+        & (Join-Path $VenvDir 'Scripts\python.exe') $getPipPath --quiet
+        if ($LASTEXITCODE -ne 0) { Write-Err "Failed to install pip into venv"; exit 1 }
+    } else {
+        & $PythonBin -m venv $VenvDir
+        if ($LASTEXITCODE -ne 0) { Write-Err "Failed to create venv"; exit 1 }
+    }
 } else {
     Write-Info "Virtual environment already exists at $VenvDir"
 }
