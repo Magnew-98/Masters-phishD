@@ -92,7 +92,7 @@ def run(app, agent_name: str, batch_size: int = 20, dry_run: bool = False) -> No
 
     existing = _load_results()
     done_ids = set(existing[existing["agent_name"] == agent_name]["email_id"].tolist())
-    pending = test_df[~test_df["email_id"].isin(done_ids)]
+    pending = test_df[~test_df["email_id"].isin(done_ids)].sample(frac=1, random_state=RANDOM_STATE)
 
     if not dry_run and pending.empty:
         print(f"All {len(test_ids)} test emails already processed for '{agent_name}'.")
