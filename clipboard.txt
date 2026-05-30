@@ -1,30 +1,26 @@
-At E:\Masters-phishD-1\install_prerequisites.ps1:143 char:48
-+     Write-Info "Dataset found: $Dataset ($rows rows)"
-+                                                ~~~~
-Unexpected token 'rows' in expression or statement.
-At E:\Masters-phishD-1\install_prerequisites.ps1:143 char:47
-+     Write-Info "Dataset found: $Dataset ($rows rows)"
-+                                               ~
-Missing closing ')' in expression.
-At E:\Masters-phishD-1\install_prerequisites.ps1:132 char:8
-+ } else {
-+        ~
-Missing closing '}' in statement block or type definition.
-At E:\Masters-phishD-1\install_prerequisites.ps1:81 char:22
-+ if (-not $ollamaCmd) {
-+                      ~
-Missing closing '}' in statement block or type definition.
-At E:\Masters-phishD-1\install_prerequisites.ps1:37 char:58
-+ if ((Test-Path $VenvDir) -and -not (Test-Path $VenvPip)) {
-+                                                          ~
-Missing closing '}' in statement block or type definition.
-At E:\Masters-phishD-1\install_prerequisites.ps1:143 char:52
-+     Write-Info "Dataset found: $Dataset ($rows rows)"
-+                                                    ~
-Unexpected token ')' in expression or statement.
-At E:\Masters-phishD-1\install_prerequisites.ps1:145 char:16
-+     Write-Err "Dataset not found at $Dataset"
-+                ~~~~~~~
-Unexpected token 'Dataset' in expression or statement.
-    + CategoryInfo          : ParserError: (:) [], ParseException
-    + FullyQualifiedErrorId : UnexpectedToken
+PS E:\Masters-phishD> .\install_prerequisites.ps1
+[INFO]  Checking Python version...
+[INFO]  Using Python 3.10 (python3.10)
+[INFO]  Creating virtual environment at E:\Masters-phishD\.venv ...
+Traceback (most recent call last):
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.10_3.10.3056.0_x64__qbz5n2kfra8p0\lib\runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.10_3.10.3056.0_x64__qbz5n2kfra8p0\lib\runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.10_3.10.3056.0_x64__qbz5n2kfra8p0\lib\venv\__main__.py", line 6, in <module>
+    main()
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.10_3.10.3056.0_x64__qbz5n2kfra8p0\lib\venv\__init__.py", line 516, in main
+    builder.create(d)
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.10_3.10.3056.0_x64__qbz5n2kfra8p0\lib\venv\__init__.py", line 75, in create
+    self._setup_pip(context)
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.10_3.10.3056.0_x64__qbz5n2kfra8p0\lib\venv\__init__.py", line 328, in _setup_pip
+    self._call_new_python(context, '-m', 'ensurepip', '--upgrade',
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.10_3.10.3056.0_x64__qbz5n2kfra8p0\lib\venv\__init__.py", line 324, in _call_new_python
+    subprocess.check_output(args, **kwargs)
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.10_3.10.3056.0_x64__qbz5n2kfra8p0\lib\subprocess.py", line 421, in check_output
+    return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.10_3.10.3056.0_x64__qbz5n2kfra8p0\lib\subprocess.py", line 505, in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.10_3.10.3056.0_x64__qbz5n2kfra8p0\lib\subprocess.py", line 1141, in communicate
+    stdout = self.stdout.read()
+KeyboardInterrupt
