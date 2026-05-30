@@ -72,15 +72,19 @@ def print_metrics(agent_name: str) -> None:
     print(classification_report(truths, preds, digits=4))
 
 
-def run(app, agent_name: str, batch_size: int = 20) -> None:
+def run(app, agent_name: str, batch_size: int = 20, dry_run: bool = False) -> None:
     """
     Run one batch of inference for `agent_name` using the provided LangGraph `app`.
 
     The app must accept {"email": str} and return {"prediction": str, "confidence": float}.
     Results are appended to results/results.csv. Call repeatedly until all test emails
     are processed, or call print_metrics() to see current accumulated results.
+
+    Set dry_run=True while building/testing agents — runs inference and prints output
+    but never writes to results.csv.
     """
-    RESULTS_DIR.mkdir(exist_ok=True)
+    if not dry_run:
+        RESULTS_DIR.mkdir(exist_ok=True)
 
     _, test_ids = _get_split()
     df = _load_full_dataset()
@@ -90,15 +94,16 @@ def run(app, agent_name: str, batch_size: int = 20) -> None:
     done_ids = set(existing[existing["agent_name"] == agent_name]["email_id"].tolist())
     pending = test_df[~test_df["email_id"].isin(done_ids)]
 
-    if pending.empty:
+    if not dry_run and pending.empty:
         print(f"All {len(test_ids)} test emails already processed for '{agent_name}'.")
         print_metrics(agent_name)
         return
 
     batch = pending.head(batch_size)
     remaining_after = len(pending) - len(batch)
+    prefix = "[DRY RUN] " if dry_run else ""
     print(
-        f"[{agent_name}] Running batch of {len(batch)} "
+        f"{prefix}[{agent_name}] Running batch of {len(batch)} "
         f"({len(done_ids)} done, {remaining_after} remaining after this batch)"
     )
 
@@ -112,6 +117,16 @@ def run(app, agent_name: str, batch_size: int = 20) -> None:
             "prediction": result["prediction"],
             "confidence": result["confidence"],
         })
+        if dry_run:
+            print(f"  TRUE: {row['label']}  PRED: {result['prediction']}  CONF: {result['confidence']:.2f}")
+
+    if dry_run:
+        batch_truths = [r["true_label"] for r in rows]
+        batch_preds = [r["prediction"] for r in rows]
+        print(f"\n[DRY RUN] Batch accuracy: {accuracy_score(batch_truths, batch_preds):.4f}")
+        print(classification_report(batch_truths, batch_preds, digits=4))
+        print("[DRY RUN] Nothing written to disk.")
+        return
 
     new_results = pd.DataFrame(rows)
     updated = pd.concat([existing, new_results], ignore_index=True)
@@ -126,6 +141,7 @@ if __name__ == "__main__":
     parser.add_argument("--agent", required=True, help="Agent name (must match graph import)")
     parser.add_argument("--batch-size", type=int, default=20)
     parser.add_argument("--metrics-only", action="store_true", help="Print metrics without running inference")
+    parser.add_argument("--dry-run", action="store_true", help="Run inference but do not write results to disk")
     args = parser.parse_args()
 
     if args.metrics_only:
@@ -133,6 +149,6 @@ if __name__ == "__main__":
     else:
         if args.agent == "binary":
             from src.graph.binary_graph import app
-            run(app, agent_name="binary", batch_size=args.batch_size)
+            run(app, agent_name="binary", batch_size=args.batch_size, dry_run=args.dry_run)
         else:
             print(f"Unknown agent '{args.agent}'. Add it to the __main__ block or call run() directly.")
