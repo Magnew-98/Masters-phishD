@@ -171,11 +171,11 @@ EOF
 
 # ── 10. Write run_experiment wrapper ─────────────────────────────────────────
 RUNNER="$PROJECT_DIR/run_experiment.sh"
-cat > "$RUNNER" <<RUNNER_EOF
+cat > "$RUNNER" <<'RUNNER_EOF'
 #!/usr/bin/env bash
 set -euo pipefail
-cd "$(dirname "\${BASH_SOURCE[0]}")"
-exec "$VENV_DIR/bin/python3" -m src.evaluation.run_experiment "\$@"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec "$SCRIPT_DIR/.venv/bin/python3" -m src.evaluation.run_experiment "$@"
 RUNNER_EOF
 chmod +x "$RUNNER"
 info "Created runner: $RUNNER"
