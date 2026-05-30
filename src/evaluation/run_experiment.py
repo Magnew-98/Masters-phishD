@@ -69,7 +69,7 @@ def print_metrics(agent_name: str) -> None:
 
     print(f"\n=== {agent_name} | {len(agent_results)}/{total_test} emails evaluated ===")
     print(f"Accuracy: {accuracy_score(truths, preds):.4f}")
-    print(classification_report(truths, preds, digits=4))
+    print(classification_report(truths, preds, digits=4, zero_division=0))
 
 
 def run(app, agent_name: str, batch_size: int = 20, dry_run: bool = False) -> None:
@@ -124,7 +124,7 @@ def run(app, agent_name: str, batch_size: int = 20, dry_run: bool = False) -> No
         batch_truths = [r["true_label"] for r in rows]
         batch_preds = [r["prediction"] for r in rows]
         print(f"\n[DRY RUN] Batch accuracy: {accuracy_score(batch_truths, batch_preds):.4f}")
-        print(classification_report(batch_truths, batch_preds, digits=4))
+        print(classification_report(batch_truths, batch_preds, digits=4, zero_division=0))
         print("[DRY RUN] Nothing written to disk.")
         return
 

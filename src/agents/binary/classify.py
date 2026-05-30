@@ -10,14 +10,14 @@ def classify_email(state):
     prompt = f"""
 You are a cybersecurity classification system.
 
-Based on the analysis below, classify the email.
-
-Rules:
-- phishing = any deception, credential theft, urgency manipulation
-- legitimate = normal communication
+Based on the analysis below, classify the email as EITHER phishing OR legitimate.
+Normal business emails, internal communications, and routine messages are legitimate even if they contain urgency or requests.
+Only classify as phishing if there is clear evidence of deliberate deception intended to steal credentials, money, or personal information.
 
 Analysis:
 {analysis}
+
+Classify as phishing only if the analysis identifies concrete deceptive intent, not just because the email contains urgency or a request.
 """
 
     result = llm.invoke(prompt)
