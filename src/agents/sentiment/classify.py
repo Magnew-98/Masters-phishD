@@ -19,18 +19,17 @@ Classification definitions:
 - PHISHING: Email where psychological manipulation is deliberately engineered to exploit emotional vulnerabilities — manufactured fear disconnected from reality, impersonated authority making implausible requests, artificial urgency designed to prevent rational evaluation, or fabricated trust.
 
 Decision process — reason through each step before concluding:
-1. Did the analysis identify manipulation explicitly flagged as disproportionate or suspicious — not merely present?
-2. Do multiple manipulation tactics converge on the same goal of overriding rational judgement?
-3. Is the emotional pressure proportionate to a plausible business situation, or does it only make sense as a deliberate attempt to deceive?
-4. Step back: if a legitimate businessperson sent this email, which elements would naturally be present? What can only be explained by deceptive intent?
+1. Were any of the three distinctive indicators (reward/gain, implausible authority, extreme urgency) flagged as suspicious — not just present?
+2. Step back: could every element of this email's emotional appeal be explained by a legitimate business sender? If yes, classify as legitimate.
+3. Only if at least one indicator is clearly implausible in a business context should you lean toward phishing.
 
-Calibration guidance — high bar required for phishing:
-- Routine urgency, authority, or deadline language alone = legitimate
-- Single suspicious indicator without corroboration = lean legitimate, low confidence
-- Two or more converging disproportionate manipulation tactics = phishing, moderate confidence
-- Clear manufactured fear or false authority impersonation = phishing, high confidence
-- No suspicious manipulation found = legitimate, high confidence
-- Confidence: 0.5 = uncertain, 0.7 = moderate evidence, 0.9+ = strong converging evidence
+Calibration guidance — the bar for phishing is high:
+- No distinctive indicators found = legitimate, high confidence (0.85+)
+- Routine business urgency, authority, or deadlines only = legitimate
+- One clearly implausible indicator = phishing, moderate confidence (0.65–0.75)
+- Two or more clearly implausible indicators = phishing, high confidence (0.80+)
+- Uncertainty about whether an indicator is genuine or manufactured = lean legitimate (0.55–0.65)
+- Confidence: 0.5 = genuinely uncertain, 0.7 = moderate evidence, 0.9+ = unambiguous manipulation
 
 Sentiment analysis:
 {sentiment_analysis}

@@ -8,33 +8,26 @@ def analyse_sentiment(state):
     email = state["email"]
 
     prompt = f"""
-You are a cognitive security researcher and social engineering specialist with 12 years of experience studying how phishing campaigns exploit human psychological vulnerabilities. You understand both the science of persuasion and the norms of professional business communication.
+You are a social engineering specialist with 12 years of experience identifying phishing campaigns that exploit psychological vulnerabilities.
 
-Your task is to analyse the email below for psychological manipulation indicators. Reason through each category in turn before forming your overall assessment. For each category, explicitly state your finding — including when nothing suspicious is present, as the absence of manipulation is meaningful evidence of legitimacy.
+Your task is to analyse the email below for psychological manipulation. Focus only on indicators that are genuinely distinctive of phishing — not features that are common in normal business communication.
 
-FRAMING CONTEXT — read this before analysing:
-Professional business email routinely contains urgency, authority, deadlines, and time pressure as normal features of corporate life. These features alone are NOT phishing indicators. Your task is to identify psychological manipulation that is DISPROPORTIONATE to any plausible business context, or that appears engineered to bypass rational decision-making rather than to communicate a genuine need. For each category, ask: could a legitimate business sender have written this, or does it only make sense as an attempt to manipulate?
+Key distinction: urgency, authority, deadlines, and consequences are routine in corporate email and are NOT reliable phishing indicators on their own. You are looking for manipulation that would be implausible or out of place in a legitimate professional context.
 
-Examine the email across these categories:
+Examine only these three categories — they are the most distinctive for phishing:
 
-1. URGENCY & TIME PRESSURE — Is there artificial urgency designed to prevent careful thinking? Normal: "please respond by Friday", "deadline is end of month". Suspicious: "your account will be deleted in 2 hours", "you must act NOW or face consequences", countdown pressure with no legitimate business basis.
+1. REWARD & UNSOLICITED GAIN — Does the email offer unexpected money, prizes, lottery winnings, unclaimed funds, or implausible financial benefits that require personal action to claim? This is rare in legitimate business email and a strong phishing signal when present.
 
-2. FEAR & THREAT — Is fear being weaponised beyond normal business stakes? Normal: "failure to comply may result in delays". Suspicious: threats of account closure, legal action, financial penalty, or security breach that appear designed to cause panic rather than inform.
+2. IMPLAUSIBLE EXTERNAL AUTHORITY — Does the email claim authority from an organisation that would have no legitimate reason to contact this recipient in this way? Examples: a bank, government body, or tech company contacting a corporate employee with an account verification request unrelated to their work. Distinguish from legitimate internal authority (a manager, IT department, HR).
 
-3. AUTHORITY INVOCATION — Is authority being impersonated rather than legitimately claimed? Normal: a manager directing their team, an IT department sending a policy update. Suspicious: implausible authority claims, impersonation of banks, government agencies, or senior executives making unusual requests outside normal channels.
+3. EXTREME ARTIFICIAL URGENCY — Is there a specific, implausible countdown or ultimatum that serves no legitimate business purpose? Examples: "your account will be permanently deleted in 2 hours", "respond within the next 30 minutes or face legal action". Distinguish from normal business deadlines ("please respond by end of week").
 
-4. REWARD & GREED — Does the email offer unexpected, unsolicited gain? Normal: legitimate bonus or commission notifications. Suspicious: prize notifications, lottery winnings, unclaimed funds, or offers that require personal action to claim an implausible reward.
-
-5. SOCIAL PROOF & CONFORMITY — Is peer pressure being manufactured to suppress scepticism? Suspicious: "all your colleagues have already verified their accounts", "everyone has updated their details — you are the only one remaining".
-
-6. TRUST EXPLOITATION — Is familiarity being fabricated to lower guard? Normal: addressing colleagues by name. Suspicious: false claims of prior interaction, impersonating a known contact, or manufactured intimacy with a stranger.
-
-7. RECIPROCITY — Is obligation being manufactured to extract compliance? Suspicious: framing a request as returning a favour when no genuine prior relationship exists.
+For each category, state clearly: not present, present but explainable by legitimate business context, or present in a form that suggests deliberate phishing manipulation.
 
 Email:
 {email}
 
-Provide a concise analysis covering all seven categories. For each, clearly state whether the indicator is absent, present but consistent with legitimate business communication, or present in a form that suggests deliberate psychological manipulation. Do not classify the email — only report the affective evidence.
+Provide a concise analysis of the three categories. Do not classify the email — only report the affective evidence.
 """
 
     result = llm.invoke(prompt)
