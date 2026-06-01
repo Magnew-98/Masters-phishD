@@ -32,28 +32,37 @@ analyses above.
 """
 
     prompt = f"""
-You are a senior cybersecurity analyst and decision-maker responsible for making the final determination on whether an email is phishing or legitimate.
+You are the Head of Threat Analysis at a Security Operations Centre, responsible for making final email disposition decisions based on multi-source intelligence reports from specialist analysts. You have over 15 years of experience distinguishing sophisticated phishing campaigns from legitimate business communication.
 
-You have received specialist analyses of the same email from one or more expert agents. Your task is to synthesise all available evidence into a single well-reasoned classification.
+Your task is to synthesise the specialist analyses below into a single, well-reasoned classification. You are not summarising — you are forming your own independent judgement based on the weight and quality of the evidence presented.
 {rag_block}
 Specialist analyses:
 
 {combined}
 
-Decision process — reason through these steps:
-1. Which analyses flagged meaningful indicators? Which found the email to be low risk?
-2. Do the specialist findings converge on the same conclusion, or do they conflict?
-3. Where analysts disagree, which analysis is supported by stronger or more specific evidence?
-4. Taken as a whole, does the weight of evidence point to deliberate deception or normal communication?
+Reasoning process — work through these steps before concluding:
+
+Step 1 — EVIDENCE INVENTORY: List which analyses flagged meaningful indicators and which found the email low-risk. Note that not all evidence carries equal weight:
+  - Technical indicators (spoofed domains, IP URLs, dangerous attachments) are objective and highly specific — strong evidence
+  - Sentiment indicators (manufactured fear, false authority) are context-dependent — moderate evidence when clearly disproportionate
+  - Linguistic indicators (homoglyphs, spelling patterns) are specific when present — strong evidence for deliberate deception
+  - General analysis is broad — useful context but lower specificity
+
+Step 2 — CONVERGENCE CHECK: Do the specialist findings point in the same direction, or do they conflict? Convergence across independent specialist lenses significantly raises confidence. Conflict requires you to adjudicate based on evidence quality.
+
+Step 3 — STEP BACK: Before concluding, identify the single most compelling piece of evidence in either direction. What would a skilled human analyst find most convincing about this email?
+
+Step 4 — CLASSIFY: Based on the weight of evidence, make your determination.
 
 Classification definitions:
-- PHISHING: Deliberate deception — impersonating trusted entities, credential harvesting, false urgency, malware distribution, or manipulation under false pretences
+- PHISHING: Deliberate deception — impersonating trusted entities, credential harvesting, manufactured urgency, malware distribution, or psychological manipulation under false pretences
 - LEGITIMATE: Normal business or personal communication — may contain links, urgency, or requests but lacks deceptive intent
 
 Calibration guidance:
-- Strong converging evidence across multiple analyses warrants high confidence (0.85+)
-- Conflict between analysts or weak evidence warrants lower confidence (0.5–0.7)
-- When genuinely uncertain, classify toward the category with the most specific supporting evidence
+- Strong converging evidence across multiple specialist lenses → high confidence (0.85+)
+- Single strong technical indicator with no other flags → moderate-high confidence phishing (0.70–0.85)
+- Specialist conflict or ambiguous evidence → lower confidence (0.50–0.70), classify toward the most specific evidence
+- Clean bill across all analyses → legitimate, high confidence (0.85+)
 
 Express confidence as a decimal between 0.0 and 1.0.
 """
