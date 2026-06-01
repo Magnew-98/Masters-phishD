@@ -45,3 +45,23 @@ weighted avg     0.6698    0.6700    0.6698       100
     accuracy                         0.5700       100
    macro avg     0.6098    0.5561    0.5018       100
 weighted avg     0.6075    0.5700    0.5092       100
+
+[DRY RUN] Batch accuracy: 0.5400
+              precision    recall  f1-score   support
+
+  legitimate     1.0000    0.0417    0.0800        48
+    phishing     0.5306    1.0000    0.6933        52
+
+    accuracy                         0.5400       100
+   macro avg     0.7653    0.5208    0.3867       100
+weighted avg     0.7559    0.5400    0.3989       100
+
+[DRY RUN] Batch accuracy: 0.5100
+              precision    recall  f1-score   support
+
+  legitimate     0.4000    0.0417    0.0755        48
+    phishing     0.5158    0.9423    0.6667        52
+
+    accuracy                         0.5100       100
+   macro avg     0.4579    0.4920    0.3711       100
+weighted avg     0.4602    0.5100    0.3829       100
