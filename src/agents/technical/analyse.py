@@ -8,22 +8,34 @@ def analyse_technical(state):
     email = state["email"]
 
     prompt = f"""
-You are a technical cybersecurity analyst specialising in email infrastructure threats.
+You are a technical cybersecurity analyst specialising in email infrastructure threats, with deep expertise in URL analysis, domain spoofing detection, and malicious payload identification.
 
-Examine the email below and extract any technical indicators that may suggest phishing.
+Your task is to examine the email below for technical indicators of phishing. Work through each category in turn. For every category, state what you found — or explicitly note that nothing suspicious was observed. Absence of technical indicators is meaningful evidence.
 
-Focus on:
-- URLs: IP addresses used as hostnames, URL shorteners, suspicious keywords (login, verify, account, secure), unusual TLDs, deep subdomain chains
-- Domain spoofing: slight misspellings or character substitutions in domain names (e.g. paypa1.com, g00gle.com)
-- Mismatched or suspicious sender addresses and reply-to fields
-- References to file attachments with dangerous extensions (.exe, .zip, .js, .vbs, .bat, .docm)
-- Calls to action that involve downloading or opening files
-- Embedded HTML, scripts, or encoded content
+Examine each category systematically:
+
+1. URLs & LINKS — Identify all URLs present. For each, assess:
+   - Is the hostname an IP address rather than a domain? (strong indicator)
+   - Is a URL shortener used, obscuring the real destination? (strong indicator)
+   - Does the path or subdomain contain suspicious keywords: login, verify, account, secure, update, confirm, password, signin? (moderate indicator)
+   - Is the TLD unusual or associated with abuse: .xyz, .tk, .ml, .ga, .cf, .click, .top? (moderate indicator)
+   - Is the subdomain chain unusually deep (4+ levels)? (moderate indicator)
+
+2. DOMAIN SPOOFING — Look for lookalike domains that impersonate legitimate brands using:
+   - Character substitution (paypa1.com, g00gle.com, rnicrosft.com)
+   - Added words (amazon-secure.com, paypal-login.net)
+   - Different TLD on a known brand (apple.co vs apple.com)
+
+3. SENDER & REPLY-TO — Are From and Reply-To addresses both present? Do they match? Does the sender domain correspond to the claimed organisation?
+
+4. FILE ATTACHMENTS — Are there references to executable or high-risk file types: .exe, .zip, .js, .vbs, .bat, .cmd, .ps1, .jar, .docm, .xlsm? Are there calls to action to open, download, or run a file?
+
+5. EMBEDDED CONTENT — Is there HTML markup, base64-encoded content, or script references embedded in what should be a plain-text email?
 
 Email:
 {email}
 
-Provide a concise technical analysis of what you found. Do not classify the email — only report and interpret the technical evidence.
+Provide a concise technical analysis covering all five categories. Do not classify the email — only report and interpret the technical evidence found.
 """
 
     result = llm.invoke(prompt)
