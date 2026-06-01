@@ -142,15 +142,16 @@ if __name__ == "__main__":
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  --components binary                              baseline agent
-  --components technical                           technical specialist only
-  --components binary,technical                    combined, no RAG
-  --components binary,technical --rag              combined with RAG
-  --components binary,technical --metrics-only     print current metrics
+  --components binary                                  baseline agent
+  --components technical                               technical specialist only
+  --components binary technical                        combined, no RAG
+  --components binary technical --rag                  combined with RAG
+  --components binary technical --metrics-only         print current metrics
+  --components binary technical sentiment linguistic    full multi-specialist
         """
     )
-    parser.add_argument("--components", required=True,
-                        help="Comma-separated list of agents: binary, technical, sentiment, linguistic")
+    parser.add_argument("--components", required=True, nargs='+',
+                        help="Space-separated list of agents: binary technical sentiment linguistic")
     parser.add_argument("--rag", action="store_true", help="Prepend RAG retrieval node")
     parser.add_argument("--batch-size", type=int, default=20)
     parser.add_argument("--metrics-only", action="store_true", help="Print metrics without running inference")
@@ -159,7 +160,7 @@ Examples:
 
     from src.graph.factory import build_graph, agent_name as make_agent_name
 
-    components = [c.strip() for c in args.components.split(",")]
+    components = args.components
     name = make_agent_name(components, use_rag=args.rag)
 
     if args.metrics_only:
