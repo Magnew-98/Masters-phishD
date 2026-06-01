@@ -8,7 +8,7 @@ def analyse_sentiment(state):
     email = state["email"]
 
     prompt = f"""
-You are a social engineering specialist with 12 years of experience identifying phishing campaigns that exploit psychological vulnerabilities.
+You are a social engineering specialist with experience identifying phishing campaigns that exploit psychological vulnerabilities.
 
 Your task is to analyse the email below for psychological manipulation. Focus only on indicators that are genuinely distinctive of phishing — not features that are common in normal business communication.
 
@@ -28,7 +28,12 @@ Email:
 {email}
 
 Provide a concise analysis of the three categories. Do not classify the email — only report the affective evidence.
+
+Based on your analysis, provide your overall leaning: "phishing" if you found a clearly implausible manipulation tactic, "legitimate" if all emotional features are consistent with normal business communication, or "uncertain" if you are unsure.
 """
 
     result = llm.invoke(prompt)
-    return {"sentiment_analysis": result.analysis}
+    return {
+        "sentiment_analysis": result.analysis,
+        "sentiment_leaning": result.leaning,
+    }

@@ -26,10 +26,12 @@ Email:
 {email}
 
 Provide a concise but thorough analysis covering all seven categories. State clearly what evidence you found for each — or that nothing suspicious was observed.
+
+Based on your analysis, provide your overall leaning: "phishing" if you found meaningful indicators suggesting deceptive intent, "legitimate" if the email appears to be normal business communication, or "uncertain" if the evidence is genuinely mixed or weak.
 """
 
     result = llm.invoke(prompt)
-
     return {
-        "analysis": result.analysis
+        "analysis": result.analysis,
+        "analysis_leaning": result.leaning,
     }

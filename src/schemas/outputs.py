@@ -4,6 +4,7 @@ from typing import Literal
 
 class AnalysisOutput(BaseModel):
     analysis: str
+    leaning: Literal["phishing", "legitimate", "uncertain"]
 
 
 class ClassificationOutput(BaseModel):

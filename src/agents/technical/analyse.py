@@ -36,7 +36,12 @@ Email:
 {email}
 
 Provide a concise technical analysis covering all five categories. Do not classify the email — only report and interpret the technical evidence found.
+
+Based on your analysis, provide your overall leaning: "phishing" if you found meaningful technical indicators suggesting deceptive infrastructure, "legitimate" if the email shows no suspicious technical features, or "uncertain" if the evidence is mixed or ambiguous.
 """
 
     result = llm.invoke(prompt)
-    return {"technical_analysis": result.analysis}
+    return {
+        "technical_analysis": result.analysis,
+        "technical_leaning": result.leaning,
+    }
