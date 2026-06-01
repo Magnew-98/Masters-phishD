@@ -150,5 +150,8 @@ if __name__ == "__main__":
         if args.agent == "binary":
             from src.graph.binary_graph import app
             run(app, agent_name="binary", batch_size=args.batch_size, dry_run=args.dry_run)
+        elif args.agent == "technical":
+            from src.graph.technical_graph import app
+            run(app, agent_name="technical", batch_size=args.batch_size, dry_run=args.dry_run)
         else:
             print(f"Unknown agent '{args.agent}'. Add it to the __main__ block or call run() directly.")
