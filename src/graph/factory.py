@@ -11,7 +11,8 @@ _ANALYSIS_NODES = {
 _SINGLE_CLASSIFY_NODES = {
     "binary":    ("classify",           "src.agents.binary.classify",    "classify_email"),
     "technical": ("classify_technical", "src.agents.technical.classify", "classify_technical"),
-    "sentiment": ("classify_sentiment", "src.agents.sentiment.classify", "classify_sentiment"),
+    "sentiment":  ("classify_sentiment",  "src.agents.sentiment.classify",  "classify_sentiment"),
+    "linguistic": ("classify_linguistic", "src.agents.linguistic.classify", "classify_linguistic"),
 }
 
 
