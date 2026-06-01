@@ -35,8 +35,13 @@ sentiment first dry run results:
 weighted avg     0.6698    0.6700    0.6698       100
 
 [DRY RUN] Nothing written to disk.
-(.venv) PS E:\Masters-phishD> .\run_experiment.ps1 --components binary,sentiment --batch-size 100 --dry-run
-usage: run_experiment.py [-h] --components COMPONENTS [--rag]
-                         [--batch-size BATCH_SIZE] [--metrics-only]
-                         [--dry-run]
-run_experiment.py: error: unrecognized arguments: sentiment
+
+[DRY RUN] binary and sentiment Batch accuracy: 0.5700
+              precision    recall  f1-score   support
+
+  legitimate     0.6667    0.2083    0.3175        48
+    phishing     0.5529    0.9038    0.6861        52
+
+    accuracy                         0.5700       100
+   macro avg     0.6098    0.5561    0.5018       100
+weighted avg     0.6075    0.5700    0.5092       100
