@@ -156,6 +156,8 @@ Examples:
     parser.add_argument("--batch-size", type=int, default=20)
     parser.add_argument("--metrics-only", action="store_true", help="Print metrics without running inference")
     parser.add_argument("--dry-run", action="store_true", help="Run inference but do not write results to disk")
+    parser.add_argument("--parallel", action="store_true",
+                        help="Run specialist nodes in parallel (requires OLLAMA_NUM_PARALLEL set in Ollama env)")
     args = parser.parse_args()
 
     from src.graph.factory import build_graph, agent_name as make_agent_name
@@ -166,5 +168,5 @@ Examples:
     if args.metrics_only:
         print_metrics(name)
     else:
-        app = build_graph(components, use_rag=args.rag)
+        app = build_graph(components, use_rag=args.rag, parallel=getattr(args, 'parallel', False))
         run(app, agent_name=name, batch_size=args.batch_size, dry_run=args.dry_run)
