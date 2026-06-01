@@ -1,23 +1,19 @@
-Tech agent results:
-
-[DRY RUN] Batch accuracy: 0.6200
+[Technical DRY RUN] Batch accuracy: 0.6500
               precision    recall  f1-score   support
 
-  legitimate     0.6512    0.5490    0.5957        51
-    phishing     0.5965    0.6939    0.6415        49
+  legitimate     0.7667    0.4510    0.5679        51
+    phishing     0.6000    0.8571    0.7059        49
 
-    accuracy                         0.6200       100
-   macro avg     0.6238    0.6214    0.6186       100
-weighted avg     0.6244    0.6200    0.6182       100
+    accuracy                         0.6500       100
+   macro avg     0.6833    0.6541    0.6369       100
+weighted avg     0.6850    0.6500    0.6355       100
 
-binary results:
-
-[DRY RUN] Batch accuracy: 0.5900
+[Binary DRY RUN] Batch accuracy: 0.6800
               precision    recall  f1-score   support
 
-  legitimate     0.5581    0.9412    0.7007        51
-    phishing     0.7857    0.2245    0.3492        49
+  legitimate     0.6418    0.8431    0.7288        51
+    phishing     0.7576    0.5102    0.6098        49
 
-    accuracy                         0.5900       100
-   macro avg     0.6719    0.5828    0.5250       100
-weighted avg     0.6697    0.5900    0.5285       100
+    accuracy                         0.6800       100
+   macro avg     0.6997    0.6767    0.6693       100
+weighted avg     0.6985    0.6800    0.6705       100
