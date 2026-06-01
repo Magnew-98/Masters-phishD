@@ -17,3 +17,18 @@ weighted avg     0.6850    0.6500    0.6355       100
     accuracy                         0.6800       100
    macro avg     0.6997    0.6767    0.6693       100
 weighted avg     0.6985    0.6800    0.6705       100
+
+sentiment first dry run results:
+
+~4 sec an email
+
+**Results:**
+[DRY RUN] Batch accuracy: 0.4600
+              precision    recall  f1-score   support
+
+  legitimate     0.2500    0.0625    0.1000        48
+    phishing     0.4886    0.8269    0.6143        52
+
+    accuracy                         0.4600       100
+   macro avg     0.3693    0.4447    0.3571       100
+weighted avg     0.3741    0.4600    0.3674       100
