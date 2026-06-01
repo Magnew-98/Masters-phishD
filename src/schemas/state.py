@@ -6,6 +6,9 @@ class EmailState(TypedDict):
     # binary agent
     analysis: Optional[str]
 
+    # rag context
+    rag_context: Optional[str]
+
     # specialist agents
     technical_analysis: Optional[str]
     sentiment_analysis: Optional[str]

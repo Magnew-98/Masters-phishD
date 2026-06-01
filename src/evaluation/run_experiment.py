@@ -11,7 +11,7 @@ RESULTS_DIR = Path("results")
 RESULTS_PATH = RESULTS_DIR / "results.csv"
 SPLIT_PATH = RESULTS_DIR / "split.json"
 
-RAG_FRACTION = 0.2
+RAG_FRACTION = 0.1
 RANDOM_STATE = 42
 
 
@@ -137,21 +137,33 @@ def run(app, agent_name: str, batch_size: int = 20, dry_run: bool = False) -> No
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run phishing detection experiment batch")
-    parser.add_argument("--agent", required=True, help="Agent name (must match graph import)")
+    parser = argparse.ArgumentParser(
+        description="Run phishing detection experiment batch",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  --components binary                              baseline agent
+  --components technical                           technical specialist only
+  --components binary,technical                    combined, no RAG
+  --components binary,technical --rag              combined with RAG
+  --components binary,technical --metrics-only     print current metrics
+        """
+    )
+    parser.add_argument("--components", required=True,
+                        help="Comma-separated list of agents: binary, technical, sentiment, linguistic")
+    parser.add_argument("--rag", action="store_true", help="Prepend RAG retrieval node")
     parser.add_argument("--batch-size", type=int, default=20)
     parser.add_argument("--metrics-only", action="store_true", help="Print metrics without running inference")
     parser.add_argument("--dry-run", action="store_true", help="Run inference but do not write results to disk")
     args = parser.parse_args()
 
+    from src.graph.factory import build_graph, agent_name as make_agent_name
+
+    components = [c.strip() for c in args.components.split(",")]
+    name = make_agent_name(components, use_rag=args.rag)
+
     if args.metrics_only:
-        print_metrics(args.agent)
+        print_metrics(name)
     else:
-        if args.agent == "binary":
-            from src.graph.binary_graph import app
-            run(app, agent_name="binary", batch_size=args.batch_size, dry_run=args.dry_run)
-        elif args.agent == "technical":
-            from src.graph.technical_graph import app
-            run(app, agent_name="technical", batch_size=args.batch_size, dry_run=args.dry_run)
-        else:
-            print(f"Unknown agent '{args.agent}'. Add it to the __main__ block or call run() directly.")
+        app = build_graph(components, use_rag=args.rag)
+        run(app, agent_name=name, batch_size=args.batch_size, dry_run=args.dry_run)

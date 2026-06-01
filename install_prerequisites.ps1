@@ -89,7 +89,9 @@ $packages = @(
     'tqdm>=4.66',
     'requests>=2.31',
     'python-dotenv>=1.0',
-    'PyYAML>=6.0'
+    'PyYAML>=6.0',
+    'sentence-transformers>=3.0',
+    'chromadb>=0.5'
 )
 & $Pip install --quiet @packages
 if ($LASTEXITCODE -ne 0) { Write-Err "pip install failed"; exit 1 }
