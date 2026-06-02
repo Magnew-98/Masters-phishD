@@ -250,7 +250,7 @@ The graph for any combination is built dynamically by `factory.py` — no separa
 
 ### LLM
 
-All nodes use `llama3.1` via Ollama locally at `temperature=0.1`, `seed=42`. Inference is fully local with no external API calls.
+All nodes use `llama3.1` via Ollama locally at `temperature=0.2`, `seed=98`. Inference is fully local with no external API calls.
 
 ### Reproducibility note
 
