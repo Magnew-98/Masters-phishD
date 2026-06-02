@@ -1,14 +1,14 @@
 from langgraph.graph import StateGraph, END, START
 from src.schemas.state import EmailState
 
-_ANALYSIS_NODES = {
+_agents = {
     "binary":    ("analyse",            "src.agents.binary.analyse",     "analyse_email"),
     "technical": ("analyse_technical",  "src.agents.technical.analyse",  "analyse_technical"),
     "sentiment": ("analyse_sentiment",  "src.agents.sentiment.analyse",  "analyse_sentiment"),
     "linguistic": ("analyse_linguistic", "src.agents.linguistic.analyse", "analyse_linguistic"),
 }
 
-_SINGLE_CLASSIFY_NODES = {
+_classifiers = {
     "binary":    ("classify",           "src.agents.binary.classify",    "classify_email"),
     "technical": ("classify_technical", "src.agents.technical.classify", "classify_technical"),
     "sentiment": ("classify_sentiment", "src.agents.sentiment.classify", "classify_sentiment"),
@@ -16,93 +16,70 @@ _SINGLE_CLASSIFY_NODES = {
 }
 
 
-def _import(module_path: str, fn_name: str):
+def _load(module_path: str, fn_name: str):
     import importlib
-    module = importlib.import_module(module_path)
-    return getattr(module, fn_name)
+    return getattr(importlib.import_module(module_path), fn_name)
 
 
 def build_graph(components: list[str], use_rag: bool = False, parallel: bool = False):
-    """
-    Build a LangGraph app from a list of component names and optional flags.
-
-    Single component:
-        [rag →] analyse → classify → END
-
-    Multiple components, sequential (default):
-        [rag →] analyse1 → analyse2 → ... → coordinate → END
-
-    Multiple components, parallel:
-        [rag →] analyse1 ↘
-                analyse2 → coordinate → END
-                analyse3 ↗
-        All analysis nodes run concurrently; coordinator waits for all.
-        Requires Ollama to support concurrent requests (OLLAMA_NUM_PARALLEL env var).
-
-    Supported components: binary, technical, sentiment, linguistic
-    """
     for c in components:
-        if c not in _ANALYSIS_NODES:
-            raise ValueError(f"Unknown component '{c}'. Choose from: {list(_ANALYSIS_NODES)}")
+        if c not in _agents:
+            raise ValueError(f"Unknown component '{c}'. Options: {list(_agents)}")
 
     workflow = StateGraph(EmailState)
 
     if len(components) == 1:
         component = components[0]
-        analyse_name, analyse_mod, analyse_fn = _ANALYSIS_NODES[component]
-        classify_name, classify_mod, classify_fn = _SINGLE_CLASSIFY_NODES[component]
+        agent_name, agent_mod, agent_fn = _agents[component]
+        classifier_name, classifier_mod, classifier_fn = _classifiers[component]
 
-        workflow.add_node(analyse_name, _import(analyse_mod, analyse_fn))
-        workflow.add_node(classify_name, _import(classify_mod, classify_fn))
+        workflow.add_node(agent_name, _load(agent_mod, agent_fn))
+        workflow.add_node(classifier_name, _load(classifier_mod, classifier_fn))
 
         if use_rag:
-            workflow.add_node("rag_retrieve", _import("src.agents.rag.retrieve", "rag_retrieve"))
+            workflow.add_node("rag_retrieve", _load("src.agents.rag.retrieve", "rag_retrieve"))
             workflow.add_edge(START, "rag_retrieve")
-            workflow.add_edge("rag_retrieve", analyse_name)
+            workflow.add_edge("rag_retrieve", agent_name)
         else:
-            workflow.add_edge(START, analyse_name)
+            workflow.add_edge(START, agent_name)
 
-        workflow.add_edge(analyse_name, classify_name)
-        workflow.add_edge(classify_name, END)
+        workflow.add_edge(agent_name, classifier_name)
+        workflow.add_edge(classifier_name, END)
 
     elif parallel:
-        # Fan-out: all specialists run concurrently, coordinator fans in
         for component in components:
-            analyse_name, analyse_mod, analyse_fn = _ANALYSIS_NODES[component]
-            workflow.add_node(analyse_name, _import(analyse_mod, analyse_fn))
+            agent_name, agent_mod, agent_fn = _agents[component]
+            workflow.add_node(agent_name, _load(agent_mod, agent_fn))
 
-        coordinate_fn = _import("src.agents.coordinator.classify", "coordinate")
-        workflow.add_node("coordinate", coordinate_fn)
+        workflow.add_node("coordinate", _load("src.agents.coordinator.classify", "coordinate"))
 
         if use_rag:
-            workflow.add_node("rag_retrieve", _import("src.agents.rag.retrieve", "rag_retrieve"))
+            workflow.add_node("rag_retrieve", _load("src.agents.rag.retrieve", "rag_retrieve"))
             workflow.add_edge(START, "rag_retrieve")
             for component in components:
-                workflow.add_edge("rag_retrieve", _ANALYSIS_NODES[component][0])
+                workflow.add_edge("rag_retrieve", _agents[component][0])
         else:
             for component in components:
-                workflow.add_edge(START, _ANALYSIS_NODES[component][0])
+                workflow.add_edge(START, _agents[component][0])
 
         for component in components:
-            workflow.add_edge(_ANALYSIS_NODES[component][0], "coordinate")
+            workflow.add_edge(_agents[component][0], "coordinate")
 
         workflow.add_edge("coordinate", END)
 
     else:
-        # Sequential (default): analysts run one after another
         chain = []
 
         if use_rag:
-            workflow.add_node("rag_retrieve", _import("src.agents.rag.retrieve", "rag_retrieve"))
+            workflow.add_node("rag_retrieve", _load("src.agents.rag.retrieve", "rag_retrieve"))
             chain.append("rag_retrieve")
 
         for component in components:
-            analyse_name, analyse_mod, analyse_fn = _ANALYSIS_NODES[component]
-            workflow.add_node(analyse_name, _import(analyse_mod, analyse_fn))
-            chain.append(analyse_name)
+            a_name, a_mod, a_fn = _agents[component]
+            workflow.add_node(a_name, _load(a_mod, a_fn))
+            chain.append(a_name)
 
-        coordinate_fn = _import("src.agents.coordinator.classify", "coordinate")
-        workflow.add_node("coordinate", coordinate_fn)
+        workflow.add_node("coordinate", _load("src.agents.coordinator.classify", "coordinate"))
         chain.append("coordinate")
 
         workflow.add_edge(START, chain[0])

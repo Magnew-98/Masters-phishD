@@ -38,7 +38,7 @@ chmod +x install_prerequisites.sh
 The script will:
 - Check for Python 3.10+
 - Create a `.venv` virtual environment
-- Install all Python dependencies
+- Install all Python dependencies (including RAG dependencies: `sentence-transformers`, `chromadb`)
 - Install Ollama if not present
 - Start the Ollama daemon
 - Pull the `llama3.1` model
@@ -64,7 +64,7 @@ The script handles everything including Ollama installation. If you have **Pytho
 
 ## Running Experiments
 
-All experiments are run through a single command. The `--components` flag specifies which agent(s) to use, and the `--rag` flag optionally prepends a RAG retrieval step.
+All experiments are run through a single command. The `--components` flag specifies which agent(s) to use (space-separated), and the `--rag` flag optionally prepends a RAG retrieval step.
 
 ### Linux / macOS
 
@@ -86,60 +86,80 @@ The examples below use the Windows syntax. Replace `.\run_experiment.ps1` with `
 
 | Name | Description |
 |---|---|
-| `binary` | Baseline — general phishing indicator analysis + classification |
+| `binary` | Baseline — general phishing indicator analysis followed by classification |
 | `technical` | Specialist — URLs, domain spoofing, file attachments, header anomalies |
-| `sentiment` | Specialist — psychological manipulation tactics (reward, authority, extreme urgency) |
-| `linguistic` | Specialist — homoglyphs, spelling patterns, grammar anomalies *(coming soon)* |
+| `sentiment` | Specialist — psychological manipulation (unsolicited reward, implausible authority, extreme urgency) |
+| `linguistic` | Specialist — homoglyph substitutions, brand misspellings, grammar and register anomalies |
 
-When more than one agent is specified, a **coordinator** node synthesises all specialist analyses into a final classification.
+When more than one agent is specified, a **coordinator** node synthesises all specialist analyses and their directional leanings into a final classification.
 
 ---
 
-## Usage Examples
+## Usage
 
-### Test a single agent (dry run — nothing saved)
-
-```powershell
-.\run_experiment.ps1 --components binary --batch-size 20 --dry-run
-.\run_experiment.ps1 --components technical --batch-size 20 --dry-run
-.\run_experiment.ps1 --components sentiment --batch-size 20 --dry-run
-```
-
-### Combine agents with a coordinator
+### Test a single agent (dry run — nothing saved to disk)
 
 ```powershell
-.\run_experiment.ps1 --components binary technical --batch-size 20 --dry-run
-.\run_experiment.ps1 --components binary sentiment --batch-size 20 --dry-run
-.\run_experiment.ps1 --components binary technical sentiment --batch-size 20 --dry-run
+.\run_experiment.ps1 --components binary --batch-size 100 --dry-run
+.\run_experiment.ps1 --components technical --batch-size 100 --dry-run
+.\run_experiment.ps1 --components sentiment --batch-size 100 --dry-run
+.\run_experiment.ps1 --components linguistic --batch-size 100 --dry-run
 ```
 
-### Add RAG (retrieval-augmented generation)
-
-The `--rag` flag prepends a retrieval step that finds similar known emails before analysis. Works with any combination:
+### Combine specialists with a coordinator
 
 ```powershell
-.\run_experiment.ps1 --components binary --rag --batch-size 20 --dry-run
-.\run_experiment.ps1 --components binary technical --rag --batch-size 20 --dry-run
-.\run_experiment.ps1 --components binary technical sentiment --rag --batch-size 20 --dry-run
+.\run_experiment.ps1 --components technical sentiment linguistic --batch-size 20 --dry-run
 ```
 
-> On first use of `--rag`, the knowledge base index is built from the RAG training split (~2,977 emails). This takes a few minutes and runs once — subsequent runs reuse the saved index at `results/rag_index/`.
+### Add RAG
+
+The `--rag` flag prepends a retrieval step that finds the 3 most similar emails from the knowledge base before analysis. Works with any combination:
+
+```powershell
+.\run_experiment.ps1 --components technical sentiment linguistic --rag --batch-size 20 --dry-run
+```
+
+> On first use of `--rag`, the knowledge base index is built from the RAG training split (~2,977 emails). This runs once and is saved to `results/rag_index/`. All subsequent runs load the existing index.
+
+### Run parallel specialist nodes
+
+On hardware with sufficient VRAM, specialist nodes can run concurrently rather than sequentially. Requires Ollama to be configured for concurrent requests:
+
+```powershell
+# Set before starting Ollama (Windows)
+$env:OLLAMA_NUM_PARALLEL = 3
+ollama serve
+
+# Then run with --parallel
+.\run_experiment.ps1 --components technical sentiment linguistic --parallel --batch-size 20
+```
 
 ### Commit real results (drop `--dry-run`)
 
 ```powershell
-.\run_experiment.ps1 --components binary --batch-size 50
-.\run_experiment.ps1 --components binary technical --rag --batch-size 50
+.\run_experiment.ps1 --components binary --batch-size 100
+.\run_experiment.ps1 --components technical sentiment linguistic --rag --batch-size 50
 ```
 
-Results are appended to `results/results.csv`. You can run batches across multiple sessions — the harness tracks which emails have already been processed and resumes automatically.
+Results are appended to `results/results.csv`. Batches can be run across multiple sessions — the harness tracks which emails have already been processed and resumes automatically.
 
 ### Check accumulated metrics without running inference
 
 ```powershell
 .\run_experiment.ps1 --components binary --metrics-only
-.\run_experiment.ps1 --components binary technical --rag --metrics-only
+.\run_experiment.ps1 --components technical sentiment linguistic --rag --metrics-only
 ```
+
+---
+
+## Architectures Under Evaluation
+
+| Agent name (auto-derived) | Command | Description |
+|---|---|---|
+| `binary` | `--components binary` | Baseline single-agent |
+| `technical_sentiment_linguistic` | `--components technical sentiment linguistic` | Multi-specialist, no RAG |
+| `technical_sentiment_linguistic_rag` | `--components technical sentiment linguistic --rag` | Multi-specialist with RAG |
 
 ---
 
@@ -149,26 +169,26 @@ On first run, the dataset is split once and saved to `results/split.json`:
 
 | Split | Size | Purpose |
 |---|---|---|
-| RAG training set | ~2,977 emails (10%) | Knowledge base for RAG retrieval |
-| Test set | ~26,791 emails (90%) | Evaluation for all agents |
+| RAG knowledge base | ~2,977 emails (10%, stratified) | Source for RAG retrieval index |
+| Test set | ~26,791 emails (90%, stratified) | Evaluation — used by all agents |
 
-All agents — including those without RAG — are evaluated on the same test set for a fair comparison.
+All agents, including those without RAG, are evaluated on the same test set for a fair comparison.
 
 ---
 
 ## Results
 
-Results are stored in `results/results.csv` with columns:
+Results are stored in `results/results.csv`:
 
 | Column | Description |
 |---|---|
 | `email_id` | Stable row ID from the original dataset |
-| `agent_name` | Auto-derived from components, e.g. `binary_technical_rag` |
+| `agent_name` | Auto-derived from components, e.g. `technical_sentiment_linguistic_rag` |
 | `true_label` | Ground truth: `phishing` or `legitimate` |
 | `prediction` | Agent prediction: `phishing` or `legitimate` |
-| `confidence` | Confidence score between 0.0 and 1.0 |
+| `confidence` | Model confidence between 0.0 and 1.0 |
 
-Each agent combination is independently tracked, so all architectures share one file and can be compared directly.
+All architectures share one file and are independently tracked by `agent_name`, enabling direct comparison.
 
 ---
 
@@ -178,46 +198,60 @@ Each agent combination is independently tracked, so all architectures share one 
 Masters-phishD/
 ├── src/
 │   ├── agents/
-│   │   ├── binary/          # Baseline agent (analyse + classify)
-│   │   ├── technical/       # Technical specialist (analyse + classify)
-│   │   ├── sentiment/       # Sentiment specialist (analyse + classify)
-│   │   ├── coordinator/     # Multi-specialist coordinator
-│   │   ├── rag/             # RAG retrieval node
-│   │   └── shared_llm.py    # Shared Ollama LLM instance
+│   │   ├── binary/           # Baseline agent (analyse + classify)
+│   │   ├── technical/        # Technical specialist (analyse + classify)
+│   │   ├── sentiment/        # Sentiment specialist (analyse + classify)
+│   │   ├── linguistic/       # Linguistic specialist (analyse + classify)
+│   │   ├── coordinator/      # Multi-specialist coordinator (classify)
+│   │   ├── rag/              # RAG retrieval node
+│   │   └── shared_llm.py     # Shared Ollama LLM instance (llama3.1)
 │   ├── graph/
-│   │   ├── factory.py       # Builds any agent combination dynamically
-│   │   └── binary_graph.py  # (legacy standalone graph)
+│   │   └── factory.py        # Dynamically builds any agent combination
 │   ├── schemas/
-│   │   ├── state.py         # Shared LangGraph state (EmailState)
-│   │   └── outputs.py       # Pydantic output schemas
+│   │   ├── state.py          # Shared LangGraph state (EmailState)
+│   │   └── outputs.py        # Pydantic output schemas
 │   ├── evaluation/
-│   │   └── run_experiment.py  # Evaluation harness
+│   │   └── run_experiment.py # Evaluation harness (batching, metrics, split)
 │   └── datasets/
-│       └── Enron.csv        # Dataset (not tracked in git)
+│       └── Enron.csv         # Dataset (not tracked in git)
 ├── results/
-│   ├── results.csv          # Accumulated experiment results
-│   ├── split.json           # Stable train/test split
-│   └── rag_index/           # ChromaDB vector store (built on first RAG run)
-├── install_prerequisites.sh   # Linux/macOS setup
-├── install_prerequisites.ps1  # Windows setup
-├── run_experiment.sh          # Linux/macOS experiment runner
-└── run_experiment.ps1         # Windows experiment runner
+│   ├── results.csv           # Accumulated experiment results
+│   ├── split.json            # Stable RAG/test split (generated once)
+│   └── rag_index/            # ChromaDB vector store (built on first RAG run)
+├── install_prerequisites.sh  # Linux/macOS setup script
+├── install_prerequisites.ps1 # Windows setup script
+├── run_experiment.sh         # Linux/macOS experiment runner
+└── run_experiment.ps1        # Windows experiment runner
 ```
 
 ---
 
 ## How It Works
 
-Each experiment run invokes a LangGraph pipeline where nodes pass state between them:
+### Single agent
 
 ```
-[rag_retrieve]  ← optional, prepended when --rag is used
-      ↓
-[analyse_*]     ← one node per component, runs in sequence
-      ↓
-[coordinate]    ← only when multiple components are specified
-      ↓
-  prediction + confidence
+email → [analyse] → [classify] → prediction + confidence
 ```
 
-Single-component runs use a dedicated classify node instead of the coordinator. The LLM for all nodes is `llama3.1` running locally via Ollama at `temperature=0.2`.
+### Multi-specialist (with optional RAG)
+
+```
+email → [rag_retrieve]          ← optional, finds 3 similar known emails
+              ↓
+       [analyse_technical]  ─┐
+       [analyse_sentiment]   ├─→ [coordinate] → prediction + confidence
+       [analyse_linguistic] ─┘
+```
+
+Each specialist produces a prose analysis and a directional leaning (`phishing` / `legitimate` / `uncertain`). The coordinator receives all analyses and leanings, applies an evidence hierarchy (technical > linguistic > sentiment), and makes the final classification.
+
+The graph for any combination is built dynamically by `factory.py` — no separate graph files are maintained per architecture.
+
+### LLM
+
+All nodes use `llama3.1` via Ollama locally at `temperature=0.1`, `seed=42`. Inference is fully local with no external API calls.
+
+### Reproducibility note
+
+Exact numerical results may vary between runs even with a fixed seed, due to hardware-level floating-point non-determinism in local LLM inference. Results should be interpreted in terms of relative architecture comparisons rather than absolute metric values.

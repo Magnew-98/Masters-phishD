@@ -13,8 +13,7 @@ class ClassificationOutput(BaseModel):
 
     @field_validator("confidence")
     @classmethod
-    def normalise_confidence(cls, v: float) -> float:
-        # LLMs sometimes return confidence as a percentage (e.g. 80.0) rather than a decimal (0.80)
+    def fix_confidence(cls, v: float) -> float:
         if v > 1.0:
             return v / 100.0
         return v

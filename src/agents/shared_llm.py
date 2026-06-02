@@ -4,5 +4,5 @@ def get_llm():
     return ChatOllama(
         model="llama3.1",
         temperature=0.1,
-        seed=42,
+        seed=98,
     )
