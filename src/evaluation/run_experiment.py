@@ -128,7 +128,6 @@ def run(app, agent_name: str, batch_size: int = 20, dry_run: bool = False) -> No
 
     rows = []
     for _, row in tqdm(batch.iterrows(), total=len(batch)):
-        tqdm.write(f"  email_id={row['email_id']}  chars={len(row['text'])}")
         result = app.invoke({"email": row["text"]})
         rows.append({
             "email_id": row["email_id"],
