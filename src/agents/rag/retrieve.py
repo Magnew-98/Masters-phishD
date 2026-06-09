@@ -86,6 +86,8 @@ def rag_retrieve(state):
     )
 
     examples = []
+    retrieved_labels = []
+    retrieved_ids = []
     for doc, meta, dist in zip(
         results["documents"][0],
         results["metadatas"][0],
@@ -97,11 +99,17 @@ def rag_retrieve(state):
         if len(doc) > 400:
             snippet += "..."
         examples.append(f"[{meta['label'].upper()}]\n{snippet}")
+        retrieved_labels.append(meta["label"])
+        retrieved_ids.append(str(meta["email_id"]))
         if len(examples) == 3:
             break
 
     if not examples:
-        return {"rag_context": ""}
+        return {"rag_context": "", "rag_retrieved_labels": "", "rag_retrieved_ids": ""}
 
     context = "\n\n".join(f"Example {i+1}:\n{ex}" for i, ex in enumerate(examples))
-    return {"rag_context": context}
+    return {
+        "rag_context": context,
+        "rag_retrieved_labels": ",".join(retrieved_labels),
+        "rag_retrieved_ids": ",".join(retrieved_ids),
+    }

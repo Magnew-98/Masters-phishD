@@ -14,5 +14,8 @@ class EmailState(TypedDict):
     sentiment_leaning: Optional[str]
     linguistic_leaning: Optional[str]
 
+    rag_retrieved_labels: Optional[str]
+    rag_retrieved_ids: Optional[str]
+
     prediction: Optional[str]
     confidence: Optional[float]

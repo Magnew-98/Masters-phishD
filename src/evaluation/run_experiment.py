@@ -50,7 +50,7 @@ def get_rag_dataframe() -> pd.DataFrame:
 def _load_results() -> pd.DataFrame:
     if RESULTS_PATH.exists():
         return pd.read_csv(RESULTS_PATH)
-    return pd.DataFrame(columns=["email_id", "agent_name", "true_label", "prediction", "confidence"])
+    return pd.DataFrame(columns=["email_id", "agent_name", "true_label", "prediction", "confidence", "rag_retrieved_labels", "rag_retrieved_ids"])
 
 
 LABELS = ["legitimate", "phishing"]
@@ -117,6 +117,8 @@ def run(app, agent_name: str, batch_size: int = 20, dry_run: bool = False) -> No
             "true_label": row["label"],
             "prediction": result["prediction"],
             "confidence": result["confidence"],
+            "rag_retrieved_labels": result.get("rag_retrieved_labels", ""),
+            "rag_retrieved_ids": result.get("rag_retrieved_ids", ""),
         })
         if dry_run:
             print(f"  TRUE: {row['label']}  PRED: {result['prediction']}  CONF: {result['confidence']:.2f}")
