@@ -3,7 +3,7 @@ import argparse
 import pandas as pd
 from pathlib import Path
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, classification_report
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from tqdm import tqdm
 
 DATASET_PATH = Path("src/datasets/Enron.csv")
@@ -53,6 +53,24 @@ def _load_results() -> pd.DataFrame:
     return pd.DataFrame(columns=["email_id", "agent_name", "true_label", "prediction", "confidence"])
 
 
+LABELS = ["legitimate", "phishing"]
+
+
+def _print_metrics_block(truths, preds, header: str) -> None:
+    print(f"\n=== {header} ===")
+    print(f"Accuracy: {accuracy_score(truths, preds):.4f}")
+    print(classification_report(truths, preds, labels=LABELS, digits=4, zero_division=0))
+
+    cm = confusion_matrix(truths, preds, labels=LABELS)
+    tn, fp, fn, tp = cm.ravel()
+    col_w = max(len("Predicted Legit"), len(str(max(cm.ravel())))) + 2
+    print("Confusion Matrix:")
+    print(f"{'':20} {'Pred Legitimate':>{col_w}} {'Pred Phishing':>{col_w}}")
+    print(f"{'Actual Legitimate':20} {tn:>{col_w}} {fp:>{col_w}}")
+    print(f"{'Actual Phishing':20} {fn:>{col_w}} {tp:>{col_w}}")
+    print()
+
+
 def print_metrics(agent_name: str) -> None:
     results = _load_results()
     agent_results = results[results["agent_name"] == agent_name]
@@ -65,9 +83,7 @@ def print_metrics(agent_name: str) -> None:
     preds = agent_results["prediction"]
     total = len(_get_split()[1])
 
-    print(f"\n=== {agent_name} | {len(agent_results)}/{total} emails evaluated ===")
-    print(f"Accuracy: {accuracy_score(truths, preds):.4f}")
-    print(classification_report(truths, preds, digits=4, zero_division=0))
+    _print_metrics_block(truths, preds, f"{agent_name} | {len(agent_results)}/{total} emails evaluated")
 
 
 def run(app, agent_name: str, batch_size: int = 20, dry_run: bool = False) -> None:
@@ -108,9 +124,8 @@ def run(app, agent_name: str, batch_size: int = 20, dry_run: bool = False) -> No
     if dry_run:
         truths = [r["true_label"] for r in rows]
         preds = [r["prediction"] for r in rows]
-        print(f"\n[DRY RUN] Batch accuracy: {accuracy_score(truths, preds):.4f}")
-        print(classification_report(truths, preds, digits=4, zero_division=0))
-        print("[DRY RUN] Nothing written to disk.")
+        _print_metrics_block(truths, preds, f"DRY RUN — {agent_name} ({len(rows)} emails)")
+        print("Nothing written to disk.")
         return
 
     updated = pd.concat([existing, pd.DataFrame(rows)], ignore_index=True)
