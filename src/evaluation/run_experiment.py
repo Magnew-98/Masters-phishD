@@ -1,3 +1,5 @@
+import re
+import html
 import json
 import argparse
 import pandas as pd
@@ -15,10 +17,19 @@ RAG_FRACTION = 0.1
 RANDOM_STATE = 98
 
 
+def _clean_email(text: str) -> str:
+    text = html.unescape(text)
+    text = re.sub(r'<[^>]+>', ' ', text)
+    text = re.sub(r'[ \t]+', ' ', text)
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    return text.strip()
+
+
 def _load_full_dataset() -> pd.DataFrame:
     df = pd.read_csv(DATASET_PATH)
     df["email_id"] = df.index
-    df["text"] = df["subject"].fillna("") + "\n\n" + df["body"].fillna("")
+    raw = df["subject"].fillna("") + "\n\n" + df["body"].fillna("")
+    df["text"] = raw.apply(_clean_email)
     df["label"] = df["label"].map({0: "legitimate", 1: "phishing"})
     return df
 
