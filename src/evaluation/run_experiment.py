@@ -18,8 +18,8 @@ RANDOM_STATE = 98
 
 
 def _clean_email(text: str) -> str:
-    # Decode HTML entities (&amp; &#x20; etc.)
-    text = html.unescape(text)
+    # Two passes to handle double-encoded entities (&amp;#x20; → &#x20; → space)
+    text = html.unescape(html.unescape(text))
     # Strip HTML tags, preserving text content between them
     text = re.sub(r'<[^>]+>', ' ', text)
     # Quoted-printable: join soft-wrapped lines (= at line end)
@@ -128,7 +128,13 @@ def run(app, agent_name: str, batch_size: int = 20, dry_run: bool = False) -> No
 
     rows = []
     for _, row in tqdm(batch.iterrows(), total=len(batch)):
-        result = app.invoke({"email": row["text"]})
+        for attempt in range(3):
+            try:
+                result = app.invoke({"email": row["text"]})
+                break
+            except Exception:
+                if attempt == 2:
+                    raise
         rows.append({
             "email_id": row["email_id"],
             "agent_name": agent_name,
