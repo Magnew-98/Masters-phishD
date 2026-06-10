@@ -1,14 +1,16 @@
-(.venv) PS E:\Masters-phishD> .\run_experiment.ps1 --components binary --parallel --batch-size 3000
-[binary] Running 3000 emails (8791 done, 15000 remaining)
- 29%|█████████████████████████████████████████████▎                                                                                                             | 87 29%|████████████████████████████████████ 31%|████████████████████████████████████████████████▌                                                                                                          | 939/3000 [40:51<1:29:40,  2.61s/it]
+[binary] Running 1500 emails (9791 done, 15500 remaining)
+ 24%|████████████████████████████████████████                                                                                                                            | 366/1500 [19:12<59:32,  3.15s/it]
 Traceback (most recent call last):
   File "E:\Masters-phishD\.venv\lib\site-packages\langchain_core\output_parsers\pydantic.py", line 28, in _parse_obj
     return self.pydantic_object.model_validate(obj)
   File "E:\Masters-phishD\.venv\lib\site-packages\pydantic\main.py", line 732, in model_validate
     return cls.__pydantic_validator__.validate_python(
-pydantic_core._pydantic_core.ValidationError: 1 validation error for AnalysisOutput
+pydantic_core._pydantic_core.ValidationError: 2 validation errors for AnalysisOutput
+analysis
+  Field required [type=missing, input_value={}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/missing
 leaning
-  Field required [type=missing, input_value={'analysis': ': No artifi...were observed.&#x20; }'}, input_type=dict]
+  Field required [type=missing, input_value={}, input_type=dict]
     For further information visit https://errors.pydantic.dev/2.13/v/missing
 
 The above exception was the direct cause of the following exception:
@@ -18,9 +20,9 @@ Traceback (most recent call last):
     return _run_code(code, main_globals, None,
   File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.10_3.10.3056.0_x64__qbz5n2kfra8p0\lib\runpy.py", line 86, in _run_code
     exec(code, run_globals)
-  File "E:\Masters-phishD\src\evaluation\run_experiment.py", line 178, in <module>
+  File "E:\Masters-phishD\src\evaluation\run_experiment.py", line 184, in <module>
     run(app, agent_name=name, batch_size=args.batch_size, dry_run=args.dry_run)
-  File "E:\Masters-phishD\src\evaluation\run_experiment.py", line 131, in run
+  File "E:\Masters-phishD\src\evaluation\run_experiment.py", line 133, in run
     result = app.invoke({"email": row["text"]})
   File "E:\Masters-phishD\.venv\lib\site-packages\langgraph\pregel\main.py", line 3880, in invoke
     for chunk in self.stream(
@@ -50,8 +52,11 @@ Traceback (most recent call last):
     return self._parse_obj(json_object)
   File "E:\Masters-phishD\.venv\lib\site-packages\langchain_core\output_parsers\pydantic.py", line 35, in _parse_obj
     raise self._parser_exception(e, obj) from e
-langchain_core.exceptions.OutputParserException: Failed to parse AnalysisOutput from completion {"analysis": ": No artificial time pressure, warnings of account suspension, or consequences for inaction are present in the email. The language used is informal and playful, with a focus on promoting a discount rather than creating urgency. **No indicators of urgency & pressure** were observed.&#x20; }"}. Got: 1 validation error for AnalysisOutput
+langchain_core.exceptions.OutputParserException: Failed to parse AnalysisOutput from completion {}. Got: 2 validation errors for AnalysisOutput
+analysis
+  Field required [type=missing, input_value={}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/missing
 leaning
-  Field required [type=missing, input_value={'analysis': ': No artifi...were observed.&#x20; }'}, input_type=dict]
+  Field required [type=missing, input_value={}, input_type=dict]
     For further information visit https://errors.pydantic.dev/2.13/v/missing
 For troubleshooting, visit: https://docs.langchain.com/oss/python/langchain/errors/OUTPUT_PARSING_FAILURE 
