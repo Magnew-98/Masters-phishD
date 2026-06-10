@@ -127,6 +127,8 @@ def run(app, agent_name: str, batch_size: int = 20, dry_run: bool = False) -> No
     print(f"{prefix}[{agent_name}] Running {len(batch)} emails ({len(processed)} done, {remaining} remaining)")
 
     rows = []
+    write_header = not RESULTS_PATH.exists()
+
     for _, row in tqdm(batch.iterrows(), total=len(batch)):
         for attempt in range(3):
             try:
@@ -135,7 +137,8 @@ def run(app, agent_name: str, batch_size: int = 20, dry_run: bool = False) -> No
             except Exception:
                 if attempt == 2:
                     raise
-        rows.append({
+
+        new_row = {
             "email_id": row["email_id"],
             "agent_name": agent_name,
             "true_label": row["label"],
@@ -143,9 +146,14 @@ def run(app, agent_name: str, batch_size: int = 20, dry_run: bool = False) -> No
             "confidence": result["confidence"],
             "rag_retrieved_labels": result.get("rag_retrieved_labels", ""),
             "rag_retrieved_ids": result.get("rag_retrieved_ids", ""),
-        })
+        }
+
         if dry_run:
+            rows.append(new_row)
             print(f"  TRUE: {row['label']}  PRED: {result['prediction']}  CONF: {result['confidence']:.2f}")
+        else:
+            pd.DataFrame([new_row]).to_csv(RESULTS_PATH, mode='a', header=write_header, index=False)
+            write_header = False
 
     if dry_run:
         truths = [r["true_label"] for r in rows]
@@ -154,9 +162,7 @@ def run(app, agent_name: str, batch_size: int = 20, dry_run: bool = False) -> No
         print("Nothing written to disk.")
         return
 
-    updated = pd.concat([existing, pd.DataFrame(rows)], ignore_index=True)
-    updated.to_csv(RESULTS_PATH, index=False)
-    print(f"Appended {len(rows)} rows → {RESULTS_PATH}")
+    print(f"Results written incrementally → {RESULTS_PATH}")
     print_metrics(agent_name)
 
 
