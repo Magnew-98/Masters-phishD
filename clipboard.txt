@@ -1,5 +1,6 @@
-[binary] Running 1500 emails (9791 done, 15500 remaining)
- 24%|████████████████████████████████████████                                                                                                                            | 366/1500 [19:12<59:32,  3.15s/it]
+(.venv) PS E:\Masters-phishD> .\run_experiment.ps1 --components binary --parallel --batch-size 1500                                                
+[binary] Running 1500 emails (10029 done, 15262 remaining)
+  0%|▍                                                                                                                                                                   | 4/1500 [00:51<5:23:46, 12.99s/it]
 Traceback (most recent call last):
   File "E:\Masters-phishD\.venv\lib\site-packages\langchain_core\output_parsers\pydantic.py", line 28, in _parse_obj
     return self.pydantic_object.model_validate(obj)
@@ -20,9 +21,9 @@ Traceback (most recent call last):
     return _run_code(code, main_globals, None,
   File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.10_3.10.3056.0_x64__qbz5n2kfra8p0\lib\runpy.py", line 86, in _run_code
     exec(code, run_globals)
-  File "E:\Masters-phishD\src\evaluation\run_experiment.py", line 184, in <module>
+  File "E:\Masters-phishD\src\evaluation\run_experiment.py", line 190, in <module>
     run(app, agent_name=name, batch_size=args.batch_size, dry_run=args.dry_run)
-  File "E:\Masters-phishD\src\evaluation\run_experiment.py", line 133, in run
+  File "E:\Masters-phishD\src\evaluation\run_experiment.py", line 135, in run
     result = app.invoke({"email": row["text"]})
   File "E:\Masters-phishD\.venv\lib\site-packages\langgraph\pregel\main.py", line 3880, in invoke
     for chunk in self.stream(
