@@ -26,6 +26,9 @@ def _clean_email(text: str) -> str:
     text = re.sub(r'=\r?\n', '', text)
     # Quoted-printable: decode =XX hex sequences (=20 → space, =3D → = etc.)
     text = re.sub(r'=([0-9A-Fa-f]{2})', lambda m: chr(int(m.group(1), 16)), text)
+    # Strip control characters produced by QP decoding (null bytes, form feeds, etc.)
+    # that corrupt LLM prompts. Keeps tab (\x09), LF (\x0A), CR (\x0D), space+printable.
+    text = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]', '', text)
     # Normalise whitespace
     text = re.sub(r'[ \t]+', ' ', text)
     text = re.sub(r'\n{3,}', '\n\n', text)
