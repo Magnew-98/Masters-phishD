@@ -5,7 +5,4 @@ def get_llm():
         model="llama3.1",
         temperature=0.2,
         seed=98,
-        num_ctx=8192,
-        num_predict=2048,
-        num_keep=0,
     )
