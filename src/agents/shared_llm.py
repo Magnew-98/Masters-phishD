@@ -6,5 +6,4 @@ def get_llm():
         temperature=0.2,
         seed=98,
         num_predict=2048,
-        stop=["<|reserved_special_token"],
     )
