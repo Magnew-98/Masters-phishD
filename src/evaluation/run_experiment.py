@@ -1,6 +1,8 @@
 import re
 import html
 import json
+import time
+import urllib.request
 import argparse
 import pandas as pd
 from pathlib import Path
@@ -15,6 +17,24 @@ SPLIT_PATH = RESULTS_DIR / "split.json"
 
 RAG_FRACTION = 0.1
 RANDOM_STATE = 98
+
+
+def _reload_model(model: str = "llama3.1") -> None:
+    """Flush Ollama's loaded model state without restarting the server.
+    Unloading forces a clean reload on the next inference, clearing any
+    accumulated KV cache or memory state that causes {} output failures."""
+    try:
+        data = json.dumps({"model": model, "keep_alive": 0}).encode()
+        req = urllib.request.Request(
+            "http://localhost:11434/api/generate",
+            data=data,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        urllib.request.urlopen(req, timeout=30)
+        time.sleep(2)
+    except Exception:
+        pass
 
 
 def _clean_email(text: str) -> str:
@@ -133,13 +153,22 @@ def run(app, agent_name: str, batch_size: int = 20, dry_run: bool = False) -> No
     write_header = not RESULTS_PATH.exists()
 
     for _, row in tqdm(batch.iterrows(), total=len(batch)):
+        result = None
         for attempt in range(3):
             try:
                 result = app.invoke({"email": row["text"]})
                 break
             except Exception:
                 if attempt == 2:
-                    raise
+                    tqdm.write(f"  INFO: email_id={row['email_id']} failed 3 attempts — flushing model state and retrying")
+                    _reload_model()
+                    try:
+                        result = app.invoke({"email": row["text"]})
+                    except Exception:
+                        tqdm.write(f"  WARNING: email_id={row['email_id']} failed after flush — deferred to next run")
+
+        if result is None:
+            continue
 
         new_row = {
             "email_id": row["email_id"],

@@ -159,13 +159,13 @@ def main():
         print(f"Testing emails at shuffled positions {args.start}–{end-1} ({len(sample)} emails)")
 
     records = []
-    for _, row in sample.iterrows():
-        rec = debug_email(int(row["email_id"]), row["text"], row["label"])
-        records.append(rec)
-
-    with open(LOG_PATH, "w") as f:
-        for r in records:
-            f.write(json.dumps(r) + "\n")
+    write_header = True
+    with open(LOG_PATH, "w") as log_file:
+        for _, row in sample.iterrows():
+            rec = debug_email(int(row["email_id"]), row["text"], row["label"])
+            records.append(rec)
+            log_file.write(json.dumps(rec) + "\n")
+            log_file.flush()
 
     failures = [r for r in records if not r.get("struct_success", False)]
     print(f"\n{'='*70}")
