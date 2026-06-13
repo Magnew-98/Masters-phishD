@@ -52,7 +52,29 @@ def _clean_email(text: str) -> str:
     # Normalise whitespace
     text = re.sub(r'[ \t]+', ' ', text)
     text = re.sub(r'\n{3,}', '\n\n', text)
-    return text.strip()
+    text = text.strip()
+    if len(text) > 48000:
+        text = _extract_for_analysis(text)
+    return text
+
+
+def _extract_for_analysis(text: str, head: int = 5000, tail: int = 1500) -> str:
+    """Condense an oversized email while preserving all phishing-relevant content.
+    Keeps the opening (subject, sender context, urgency cues), the closing
+    (call-to-action, sign-off), and every URL extracted from the full text.
+    URLs are extracted from the complete email before any truncation so that
+    phishing links buried in the middle are not missed."""
+    all_urls = list(dict.fromkeys(re.findall(r'https?://\S+', text)))
+    url_block = ""
+    if all_urls:
+        url_list = "\n".join(all_urls[:40])
+        url_block = f"\n[URLS EXTRACTED FROM FULL EMAIL ({len(all_urls)} total, first 40 shown)]:\n{url_list}\n"
+    middle_note = (
+        f"\n[EMAIL TOO LONG FOR DIRECT ANALYSIS — original {len(text)} chars. "
+        f"Opening and closing shown; middle {len(text) - head - tail} chars omitted. "
+        f"All URLs extracted above.]\n"
+    )
+    return text[:head] + middle_note + url_block + text[-tail:]
 
 
 def _load_full_dataset() -> pd.DataFrame:
