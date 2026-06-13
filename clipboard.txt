@@ -1,63 +1,50 @@
-(.venv) PS E:\Masters-phishD> .\run_experiment.ps1 --components binary --parallel --batch-size 1500
-[binary] Running 1500 emails (10033 done, 15258 remaining)
- 19%|██████████████████████████████▋                                                                                                                                     | 281/1500 [13:05<56:48,  2.80s/it]
-Traceback (most recent call last):
-  File "E:\Masters-phishD\.venv\lib\site-packages\langchain_core\output_parsers\pydantic.py", line 28, in _parse_obj
-    return self.pydantic_object.model_validate(obj)
-  File "E:\Masters-phishD\.venv\lib\site-packages\pydantic\main.py", line 732, in model_validate
-    return cls.__pydantic_validator__.validate_python(
-pydantic_core._pydantic_core.ValidationError: 2 validation errors for AnalysisOutput
-analysis
-  Field required [type=missing, input_value={}, input_type=dict]
-    For further information visit https://errors.pydantic.dev/2.13/v/missing
-leaning
-  Field required [type=missing, input_value={}, input_type=dict]
-    For further information visit https://errors.pydantic.dev/2.13/v/missing
-
-The above exception was the direct cause of the following exception:
-
-Traceback (most recent call last):
-  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.10_3.10.3056.0_x64__qbz5n2kfra8p0\lib\runpy.py", line 196, in _run_module_as_main
-    return _run_code(code, main_globals, None,
-  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.10_3.10.3056.0_x64__qbz5n2kfra8p0\lib\runpy.py", line 86, in _run_code
-    exec(code, run_globals)
-  File "E:\Masters-phishD\src\evaluation\run_experiment.py", line 190, in <module>
-    run(app, agent_name=name, batch_size=args.batch_size, dry_run=args.dry_run)
-  File "E:\Masters-phishD\src\evaluation\run_experiment.py", line 135, in run
-    result = app.invoke({"email": row["text"]})
-  File "E:\Masters-phishD\.venv\lib\site-packages\langgraph\pregel\main.py", line 3880, in invoke
-    for chunk in self.stream(
-  File "E:\Masters-phishD\.venv\lib\site-packages\langgraph\pregel\main.py", line 2936, in stream
-    for _ in runner.tick(
-  File "E:\Masters-phishD\.venv\lib\site-packages\langgraph\pregel\_runner.py", line 207, in tick
-    run_with_retry(
-  File "E:\Masters-phishD\.venv\lib\site-packages\langgraph\pregel\_retry.py", line 585, in run_with_retry
-    return task.proc.invoke(task.input, config)
-  File "E:\Masters-phishD\.venv\lib\site-packages\langgraph\_internal\_runnable.py", line 684, in invoke
-    input = context.run(step.invoke, input, config, **kwargs)
-  File "E:\Masters-phishD\.venv\lib\site-packages\langgraph\_internal\_runnable.py", line 426, in invoke
-    ret = self.func(*args, **kwargs)
-  File "E:\Masters-phishD\src\agents\binary\analyse.py", line 31, in analyse_email
-    result = llm.invoke(prompt)
-  File "E:\Masters-phishD\.venv\lib\site-packages\langchain_core\runnables\base.py", line 3335, in invoke
-    input_ = context.run(step.invoke, input_, config)
-  File "E:\Masters-phishD\.venv\lib\site-packages\langchain_core\output_parsers\base.py", line 207, in invoke
-    return self._call_with_config(
-  File "E:\Masters-phishD\.venv\lib\site-packages\langchain_core\runnables\base.py", line 2238, in _call_with_config
-    context.run(
-  File "E:\Masters-phishD\.venv\lib\site-packages\langchain_core\runnables\config.py", line 486, in call_func_with_variable_args
-    return func(input, **kwargs)  # type: ignore[call-arg]
-  File "E:\Masters-phishD\.venv\lib\site-packages\langchain_core\output_parsers\base.py", line 208, in <lambda>
-    lambda inner_input: self.parse_result(
-  File "E:\Masters-phishD\.venv\lib\site-packages\langchain_core\output_parsers\pydantic.py", line 76, in parse_result
-    return self._parse_obj(json_object)
-  File "E:\Masters-phishD\.venv\lib\site-packages\langchain_core\output_parsers\pydantic.py", line 35, in _parse_obj
-    raise self._parser_exception(e, obj) from e
-langchain_core.exceptions.OutputParserException: Failed to parse AnalysisOutput from completion {}. Got: 2 validation errors for AnalysisOutput
-analysis
-  Field required [type=missing, input_value={}, input_type=dict]
-    For further information visit https://errors.pydantic.dev/2.13/v/missing
-leaning
-  Field required [type=missing, input_value={}, input_type=dict]
-    For further information visit https://errors.pydantic.dev/2.13/v/missing
-For troubleshooting, visit: https://docs.langchain.com/oss/python/langchain/errors/OUTPUT_PARSING_FAILURE 
+[binary] Running 111 emails (26658 done, 22 remaining)
+  INFO: email_id=11388 failed 3 attempts — flushing model state and retrying                                                                                                                                 
+  WARNING: email_id=11388 failed after flush — deferred to next run                                                                                                                                          
+  INFO: email_id=3686 failed 3 attempts — flushing model state and retrying                                                                                                                                  
+  WARNING: email_id=3686 failed after flush — deferred to next run                                                                                                                                           
+  INFO: email_id=26070 failed 3 attempts — flushing model state and retrying                                                                                                                                 
+  WARNING: email_id=26070 failed after flush — deferred to next run                                                                                                                                          
+  INFO: email_id=17084 failed 3 attempts — flushing model state and retrying                                                                                                                                 
+  WARNING: email_id=17084 failed after flush — deferred to next run                                                                                                                                          
+  INFO: email_id=11352 failed 3 attempts — flushing model state and retrying                                                                                                                                 
+  WARNING: email_id=11352 failed after flush — deferred to next run                                                                                                                                          
+  INFO: email_id=22060 failed 3 attempts — flushing model state and retrying                                                                                                                                 
+  WARNING: email_id=22060 failed after flush — deferred to next run                                                                                                                                          
+  INFO: email_id=11366 failed 3 attempts — flushing model state and retrying                                                                                                                                 
+  WARNING: email_id=11366 failed after flush — deferred to next run                                                                                                                                          
+  INFO: email_id=24720 failed 3 attempts — flushing model state and retrying                                                                                                                                 
+  INFO: email_id=10662 failed 3 attempts — flushing model state and retrying                                                                                                                                 
+  WARNING: email_id=10662 failed after flush — deferred to next run                                                                                                                                          
+  INFO: email_id=11357 failed 3 attempts — flushing model state and retrying                                                                                                                                 
+  WARNING: email_id=11357 failed after flush — deferred to next run                                                                                                                                          
+  INFO: email_id=11390 failed 3 attempts — flushing model state and retrying                                                                                                                                 
+  WARNING: email_id=11390 failed after flush — deferred to next run                                                                                                                                          
+  INFO: email_id=11412 failed 3 attempts — flushing model state and retrying                                                                                                                                 
+  WARNING: email_id=11412 failed after flush — deferred to next run                                                                                                                                          
+  INFO: email_id=10668 failed 3 attempts — flushing model state and retrying                                                                                                                                 
+  WARNING: email_id=10668 failed after flush — deferred to next run                                                                                                                                          
+  INFO: email_id=11360 failed 3 attempts — flushing model state and retrying                                                                                                                                 
+  WARNING: email_id=11360 failed after flush — deferred to next run                                                                                                                                          
+  INFO: email_id=11377 failed 3 attempts — flushing model state and retrying                                                                                                                                 
+  WARNING: email_id=11377 failed after flush — deferred to next run                                                                                                                                          
+  INFO: email_id=10666 failed 3 attempts — flushing model state and retrying                                                                                                                                 
+  WARNING: email_id=10666 failed after flush — deferred to next run                                                                                                                                          
+  INFO: email_id=11373 failed 3 attempts — flushing model state and retrying                                                                                                                                 
+  WARNING: email_id=11373 failed after flush — deferred to next run                                                                                                                                          
+  INFO: email_id=10670 failed 3 attempts — flushing model state and retrying                                                                                                                                 
+  WARNING: email_id=10670 failed after flush — deferred to next run                                                                                                                                          
+  INFO: email_id=11380 failed 3 attempts — flushing model state and retrying                                                                                                                                 
+  WARNING: email_id=11380 failed after flush — deferred to next run                                                                                                                                          
+  INFO: email_id=11392 failed 3 attempts — flushing model state and retrying                                                                                                                                 
+  WARNING: email_id=11392 failed after flush — deferred to next run                                                                                                                                          
+  INFO: email_id=11381 failed 3 attempts — flushing model state and retrying                                                                                                                                 
+  WARNING: email_id=11381 failed after flush — deferred to next run                                                                                                                                          
+  INFO: email_id=11361 failed 3 attempts — flushing model state and retrying                                                                                                                                 
+  WARNING: email_id=11361 failed after flush — deferred to next run                                                                                                                                          
+  INFO: email_id=11386 failed 3 attempts — flushing model state and retrying                                                                                                                                 
+  WARNING: email_id=11386 failed after flush — deferred to next run                                                                                                                                          
+  INFO: email_id=11358 failed 3 attempts — flushing model state and retrying                                                                                                                                 
+  WARNING: email_id=11358 failed after flush — deferred to next run                                                                                                                                          
+  INFO: email_id=11351 failed 3 attempts — flushing model state and retrying                                                                                                                                 
+  WARNING: email_id=11351 failed after flush — deferred to next run     
