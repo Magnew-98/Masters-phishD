@@ -1,4 +1,4 @@
-from src.agents.shared_llm import get_llm
+from src.agents.shared_llm import get_llm, fresh_prompt
 from src.schemas.outputs import ClassificationOutput
 
 def classify_technical(state):
@@ -32,7 +32,7 @@ Technical analysis:
 Express confidence as a decimal between 0.0 and 1.0.
 """
 
-    result = get_llm().with_structured_output(ClassificationOutput).invoke(prompt)
+    result = get_llm().with_structured_output(ClassificationOutput).invoke(fresh_prompt(prompt))
     return {
         "prediction": result.prediction,
         "confidence": result.confidence

@@ -1,4 +1,4 @@
-from src.agents.shared_llm import get_llm
+from src.agents.shared_llm import get_llm, fresh_prompt
 from src.schemas.outputs import AnalysisOutput
 
 def analyse_email(state):
@@ -25,7 +25,7 @@ Email:
 Provide a concise but thorough analysis covering all seven categories. State clearly what evidence you found for each — or that nothing suspicious was observed.
 """
 
-    result = get_llm().with_structured_output(AnalysisOutput).invoke(prompt)
+    result = get_llm().with_structured_output(AnalysisOutput).invoke(fresh_prompt(prompt))
     return {
         "analysis": result.analysis,
         "analysis_leaning": result.leaning,
