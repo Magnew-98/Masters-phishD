@@ -1,50 +1,5 @@
-[binary] Running 111 emails (26658 done, 22 remaining)
-  INFO: email_id=11388 failed 3 attempts — flushing model state and retrying                                                                                                                                 
-  WARNING: email_id=11388 failed after flush — deferred to next run                                                                                                                                          
-  INFO: email_id=3686 failed 3 attempts — flushing model state and retrying                                                                                                                                  
-  WARNING: email_id=3686 failed after flush — deferred to next run                                                                                                                                           
-  INFO: email_id=26070 failed 3 attempts — flushing model state and retrying                                                                                                                                 
-  WARNING: email_id=26070 failed after flush — deferred to next run                                                                                                                                          
-  INFO: email_id=17084 failed 3 attempts — flushing model state and retrying                                                                                                                                 
-  WARNING: email_id=17084 failed after flush — deferred to next run                                                                                                                                          
-  INFO: email_id=11352 failed 3 attempts — flushing model state and retrying                                                                                                                                 
-  WARNING: email_id=11352 failed after flush — deferred to next run                                                                                                                                          
-  INFO: email_id=22060 failed 3 attempts — flushing model state and retrying                                                                                                                                 
-  WARNING: email_id=22060 failed after flush — deferred to next run                                                                                                                                          
-  INFO: email_id=11366 failed 3 attempts — flushing model state and retrying                                                                                                                                 
-  WARNING: email_id=11366 failed after flush — deferred to next run                                                                                                                                          
-  INFO: email_id=24720 failed 3 attempts — flushing model state and retrying                                                                                                                                 
-  INFO: email_id=10662 failed 3 attempts — flushing model state and retrying                                                                                                                                 
-  WARNING: email_id=10662 failed after flush — deferred to next run                                                                                                                                          
-  INFO: email_id=11357 failed 3 attempts — flushing model state and retrying                                                                                                                                 
-  WARNING: email_id=11357 failed after flush — deferred to next run                                                                                                                                          
-  INFO: email_id=11390 failed 3 attempts — flushing model state and retrying                                                                                                                                 
-  WARNING: email_id=11390 failed after flush — deferred to next run                                                                                                                                          
-  INFO: email_id=11412 failed 3 attempts — flushing model state and retrying                                                                                                                                 
-  WARNING: email_id=11412 failed after flush — deferred to next run                                                                                                                                          
-  INFO: email_id=10668 failed 3 attempts — flushing model state and retrying                                                                                                                                 
-  WARNING: email_id=10668 failed after flush — deferred to next run                                                                                                                                          
-  INFO: email_id=11360 failed 3 attempts — flushing model state and retrying                                                                                                                                 
-  WARNING: email_id=11360 failed after flush — deferred to next run                                                                                                                                          
-  INFO: email_id=11377 failed 3 attempts — flushing model state and retrying                                                                                                                                 
-  WARNING: email_id=11377 failed after flush — deferred to next run                                                                                                                                          
-  INFO: email_id=10666 failed 3 attempts — flushing model state and retrying                                                                                                                                 
-  WARNING: email_id=10666 failed after flush — deferred to next run                                                                                                                                          
-  INFO: email_id=11373 failed 3 attempts — flushing model state and retrying                                                                                                                                 
-  WARNING: email_id=11373 failed after flush — deferred to next run                                                                                                                                          
-  INFO: email_id=10670 failed 3 attempts — flushing model state and retrying                                                                                                                                 
-  WARNING: email_id=10670 failed after flush — deferred to next run                                                                                                                                          
-  INFO: email_id=11380 failed 3 attempts — flushing model state and retrying                                                                                                                                 
-  WARNING: email_id=11380 failed after flush — deferred to next run                                                                                                                                          
-  INFO: email_id=11392 failed 3 attempts — flushing model state and retrying                                                                                                                                 
-  WARNING: email_id=11392 failed after flush — deferred to next run                                                                                                                                          
-  INFO: email_id=11381 failed 3 attempts — flushing model state and retrying                                                                                                                                 
-  WARNING: email_id=11381 failed after flush — deferred to next run                                                                                                                                          
-  INFO: email_id=11361 failed 3 attempts — flushing model state and retrying                                                                                                                                 
-  WARNING: email_id=11361 failed after flush — deferred to next run                                                                                                                                          
-  INFO: email_id=11386 failed 3 attempts — flushing model state and retrying                                                                                                                                 
-  WARNING: email_id=11386 failed after flush — deferred to next run                                                                                                                                          
-  INFO: email_id=11358 failed 3 attempts — flushing model state and retrying                                                                                                                                 
-  WARNING: email_id=11358 failed after flush — deferred to next run                                                                                                                                          
-  INFO: email_id=11351 failed 3 attempts — flushing model state and retrying                                                                                                                                 
-  WARNING: email_id=11351 failed after flush — deferred to next run     
+# Show determinism: run each email 3 times with seed=98
+python -m src.evaluation.debug_inference --email-id 7003 8488 13422 --repeats 3
+
+# Then test if a different seed breaks it
+python -m src.evaluation.debug_inference --email-id 7003 8488 13422 --seed-test

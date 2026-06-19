@@ -4,11 +4,13 @@ range of the shuffled test set. Saves nothing to results.csv.
 
 Usage:
     python -m src.evaluation.debug_inference --start 10000 --count 20
-    python -m src.evaluation.debug_inference --start 10000 --count 20 --email-id 16362
+    python -m src.evaluation.debug_inference --email-id 16362
+    python -m src.evaluation.debug_inference --email-id 7003 8488 13422 --seed-test
+    python -m src.evaluation.debug_inference --email-id 7003 --repeats 3
 
-The --start / --count arguments select emails by their position in the
-shuffled evaluation order (same order used by run_experiment.py).
-Use --email-id to test one specific email regardless of position.
+--seed-test  For each email, run with seed=98 (production), then 99 and 100,
+             to show whether a different seed breaks the deterministic failure.
+--repeats N  Run each email N times with the same seed to show determinism.
 """
 
 import sys
@@ -51,14 +53,14 @@ Provide a concise but thorough analysis covering all seven categories. State cle
 """
 
 
-def _raw_ollama_call(prompt: str) -> dict:
+def _raw_ollama_call(prompt: str, seed: int = 98, timeout: int = 30) -> dict:
     """Call Ollama REST API directly — bypasses all LangChain parsing."""
     payload = json.dumps({
         "model": "llama3.1",
         "prompt": prompt,
         "format": "json",
         "stream": False,
-        "options": {"temperature": 0.2, "seed": 98},
+        "options": {"temperature": 0.2, "seed": seed},
     }).encode()
     req = urllib.request.Request(
         "http://localhost:11434/api/generate",
@@ -66,78 +68,76 @@ def _raw_ollama_call(prompt: str) -> dict:
         headers={"Content-Type": "application/json"},
         method="POST",
     )
-    with urllib.request.urlopen(req, timeout=120) as resp:
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
         return json.loads(resp.read())
 
 
-def _structured_call(prompt: str):
+def _structured_call(prompt: str, seed: int = 98) -> object:
     """Call via LangChain with_structured_output — same as production."""
-    llm = ChatOllama(model="llama3.1", temperature=0.2, seed=98).with_structured_output(AnalysisOutput)
+    llm = ChatOllama(
+        model="llama3.1", temperature=0.2, seed=seed,
+        num_ctx=4096, client_kwargs={"timeout": 60},
+    ).with_structured_output(AnalysisOutput)
     return llm.invoke(prompt)
 
 
-def debug_email(email_id: int, email_text: str, true_label: str) -> dict:
+def run_single(email_id: int, email_text: str, true_label: str,
+               seed: int = 98, label: str = "") -> dict:
     prompt = _build_prompt(email_text)
-    record = {
-        "email_id": email_id,
-        "true_label": true_label,
-        "text_chars": len(email_text),
-        "text_preview": email_text[:300].replace("\n", " "),
-        "prompt_chars": len(prompt),
-    }
+    tag = f"  seed={seed}" + (f"  [{label}]" if label else "")
 
-    print(f"\n{'='*70}")
-    print(f"email_id={email_id}  label={true_label}  chars={len(email_text)}")
-    print(f"text preview: {email_text[:150].replace(chr(10),' ')}")
-
-    # --- Raw Ollama call (no LangChain parsing) ---
-    print("\n[RAW OLLAMA CALL]")
+    print(f"\n--- Raw Ollama{tag} ---")
+    record = {"email_id": email_id, "seed": seed, "label_tag": label,
+              "true_label": true_label, "text_chars": len(email_text)}
     try:
         t0 = time.time()
-        raw = _raw_ollama_call(prompt)
+        raw = _raw_ollama_call(prompt, seed=seed, timeout=30)
         elapsed = round(time.time() - t0, 2)
         raw_text = raw.get("response", "")
-        record["raw_response"] = raw_text
-        record["raw_response_chars"] = len(raw_text)
-        record["raw_elapsed_s"] = elapsed
-        record["raw_done_reason"] = raw.get("done_reason", "")
-        record["raw_prompt_tokens"] = raw.get("prompt_eval_count", None)
-        record["raw_output_tokens"] = raw.get("eval_count", None)
-        print(f"  elapsed: {elapsed}s")
-        print(f"  done_reason: {raw.get('done_reason')}")
-        print(f"  prompt_tokens: {raw.get('prompt_eval_count')}  output_tokens: {raw.get('eval_count')}")
-        print(f"  raw response ({len(raw_text)} chars):\n  {raw_text[:500]}")
+        record.update({
+            "raw_response": raw_text[:200],
+            "raw_chars": len(raw_text),
+            "raw_elapsed_s": elapsed,
+            "raw_done_reason": raw.get("done_reason", ""),
+            "raw_prompt_tokens": raw.get("prompt_eval_count"),
+            "raw_output_tokens": raw.get("eval_count"),
+        })
+        print(f"  elapsed={elapsed}s  tokens_in={raw.get('prompt_eval_count')}  "
+              f"tokens_out={raw.get('eval_count')}  done={raw.get('done_reason')}")
+        print(f"  response: {raw_text[:150]}")
     except Exception as e:
         record["raw_error"] = str(e)
         print(f"  ERROR: {e}")
 
-    # --- Structured LangChain call (same as production) ---
-    print("\n[STRUCTURED LANGCHAIN CALL]")
+    print(f"\n--- Structured LangChain{tag} ---")
     try:
         t0 = time.time()
-        result = _structured_call(prompt)
+        result = _structured_call(prompt, seed=seed)
         elapsed = round(time.time() - t0, 2)
-        record["struct_success"] = True
-        record["struct_leaning"] = result.leaning
-        record["struct_analysis_chars"] = len(result.analysis)
-        record["struct_elapsed_s"] = elapsed
+        record.update({
+            "struct_success": True,
+            "struct_leaning": result.leaning,
+            "struct_analysis_chars": len(result.analysis),
+            "struct_elapsed_s": elapsed,
+        })
         print(f"  SUCCESS  leaning={result.leaning}  analysis_chars={len(result.analysis)}  elapsed={elapsed}s")
     except Exception as e:
         record["struct_success"] = False
-        record["struct_error"] = str(e)
-        print(f"  FAILED: {e}")
+        record["struct_error"] = str(e)[:120]
+        print(f"  FAILED: {str(e)[:120]}")
 
     return record
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--start", type=int, default=10000,
-                        help="Start position in shuffled test order")
-    parser.add_argument("--count", type=int, default=20,
-                        help="Number of emails to test")
-    parser.add_argument("--email-id", type=int, default=None,
-                        help="Test a specific email_id only")
+    parser.add_argument("--start", type=int, default=10000)
+    parser.add_argument("--count", type=int, default=20)
+    parser.add_argument("--email-id", nargs="+", type=int, default=None)
+    parser.add_argument("--seed-test", action="store_true",
+                        help="Test each email with seeds 98, 99, 100 to check determinism")
+    parser.add_argument("--repeats", type=int, default=1,
+                        help="Run each email N times with seed=98 to confirm determinism")
     args = parser.parse_args()
 
     LOG_PATH.parent.mkdir(exist_ok=True)
@@ -148,31 +148,48 @@ def main():
     shuffled = test_df.sample(frac=1, random_state=RANDOM_STATE).reset_index(drop=True)
 
     if args.email_id is not None:
-        rows = df[df["email_id"] == args.email_id]
-        if rows.empty:
-            print(f"email_id {args.email_id} not found")
-            sys.exit(1)
-        sample = rows
+        sample = df[df["email_id"].isin(args.email_id)]
     else:
         end = min(args.start + args.count, len(shuffled))
         sample = shuffled.iloc[args.start:end]
-        print(f"Testing emails at shuffled positions {args.start}–{end-1} ({len(sample)} emails)")
+        print(f"Testing shuffled positions {args.start}–{end-1} ({len(sample)} emails)")
 
     records = []
-    write_header = True
     with open(LOG_PATH, "w") as log_file:
         for _, row in sample.iterrows():
-            rec = debug_email(int(row["email_id"]), row["text"], row["label"])
-            records.append(rec)
-            log_file.write(json.dumps(rec) + "\n")
-            log_file.flush()
+            eid = int(row["email_id"])
+            print(f"\n{'='*70}")
+            print(f"email_id={eid}  label={row['label']}  chars={len(row['text'])}")
+            print(f"preview: {row['text'][:120].replace(chr(10),' ')}")
+
+            seeds_to_test = []
+            if args.seed_test:
+                seeds_to_test = [(98, "production"), (99, "retry-seed-99"), (100, "retry-seed-100")]
+            else:
+                seeds_to_test = [(98, "")] * args.repeats
+
+            for seed, label in seeds_to_test:
+                rec = run_single(eid, row["text"], row["label"], seed=seed, label=label)
+                records.append(rec)
+                log_file.write(json.dumps(rec) + "\n")
+                log_file.flush()
 
     failures = [r for r in records if not r.get("struct_success", False)]
+    successes_by_seed = {}
+    for r in records:
+        s = r["seed"]
+        successes_by_seed.setdefault(s, {"ok": 0, "fail": 0})
+        if r.get("struct_success"):
+            successes_by_seed[s]["ok"] += 1
+        else:
+            successes_by_seed[s]["fail"] += 1
+
     print(f"\n{'='*70}")
-    print(f"Summary: {len(records)} tested, {len(failures)} structured failures")
-    for r in failures:
-        print(f"  FAILED email_id={r['email_id']}  raw_chars={r.get('raw_response_chars','?')}  error={r.get('struct_error','?')[:100]}")
-    print(f"\nFull log: {LOG_PATH}")
+    print(f"Summary: {len(records)} calls, {len(failures)} failures")
+    print("Results by seed:")
+    for seed, counts in sorted(successes_by_seed.items()):
+        print(f"  seed={seed}: {counts['ok']} ok, {counts['fail']} fail")
+    print(f"\nLog: {LOG_PATH}")
 
 
 if __name__ == "__main__":
