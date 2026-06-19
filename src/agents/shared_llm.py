@@ -6,4 +6,5 @@ def get_llm():
         temperature=0.2,
         seed=98,
         num_ctx=4096,
+        client_kwargs={"timeout": 120},
     )
