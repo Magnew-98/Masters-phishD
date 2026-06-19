@@ -3,3 +3,105 @@ python -m src.evaluation.debug_inference --email-id 7003 8488 13422 --repeats 3
 
 # Then test if a different seed breaks it
 python -m src.evaluation.debug_inference --email-id 7003 8488 13422 --seed-test
+
+(.venv) PS E:\Masters-phishD> python -m src.evaluation.debug_inference --email-id 7003 8488 13422 --repeats 3
+
+======================================================================
+email_id=7003  label=legitimate  chars=588
+preview: job well done / bob lee , kenneth parkhill  - - - - - - - - - - - - - - - - - - - - - - forwarded by stinson gibner / ho
+
+--- Raw Ollama  seed=98 ---
+  elapsed=8.38s  tokens_in=497  tokens_out=6  done=stop
+  response: { 
+
+  }
+
+--- Structured LangChain  seed=98 ---
+  SUCCESS  leaning=legitimate  analysis_chars=3  elapsed=7.92s
+
+--- Raw Ollama  seed=98 ---
+  elapsed=9.29s  tokens_in=497  tokens_out=6  done=stop
+  response: { 
+
+  }
+
+--- Structured LangChain  seed=98 ---
+  SUCCESS  leaning=legitimate  analysis_chars=3  elapsed=7.92s
+
+--- Raw Ollama  seed=98 ---
+  elapsed=9.27s  tokens_in=497  tokens_out=6  done=stop
+  response: { 
+
+  }
+
+--- Structured LangChain  seed=98 ---
+  SUCCESS  leaning=legitimate  analysis_chars=3  elapsed=7.92s
+
+======================================================================
+email_id=8488  label=legitimate  chars=1426
+ - - - - - - - - - - - - - - my calendar .hirley ,
+
+--- Raw Ollama  seed=98 ---
+  elapsed=9.51s  tokens_in=707  tokens_out=6  done=stop
+  response: { 
+
+  }
+
+--- Structured LangChain  seed=98 ---
+  SUCCESS  leaning=phishing  analysis_chars=69  elapsed=7.94s
+
+--- Raw Ollama  seed=98 ---
+  elapsed=9.75s  tokens_in=707  tokens_out=6  done=stop
+  response: { 
+
+  }
+
+--- Structured LangChain  seed=98 ---
+  SUCCESS  leaning=phishing  analysis_chars=69  elapsed=7.7s
+
+--- Raw Ollama  seed=98 ---
+  elapsed=9.52s  tokens_in=707  tokens_out=6  done=stop
+  response: { 
+
+  }
+
+--- Structured LangChain  seed=98 ---
+  SUCCESS  leaning=phishing  analysis_chars=69  elapsed=7.96s
+
+======================================================================
+email_id=13422  label=legitimate  chars=1164
+preview: re : allegheny closing  thanks for the note . the concern was not over the timing of the receipt of funds but rather a c
+
+--- Raw Ollama  seed=98 ---
+  elapsed=9.62s  tokens_in=585  tokens_out=6  done=stop
+  response: { 
+
+  }
+
+--- Structured LangChain  seed=98 ---
+  SUCCESS  leaning=legitimate  analysis_chars=19  elapsed=7.53s
+
+--- Raw Ollama  seed=98 ---
+  elapsed=9.39s  tokens_in=585  tokens_out=6  done=stop
+  response: { 
+
+  }
+
+--- Structured LangChain  seed=98 ---
+  SUCCESS  leaning=legitimate  analysis_chars=19  elapsed=7.52s
+
+--- Raw Ollama  seed=98 ---
+  elapsed=9.39s  tokens_in=585  tokens_out=6  done=stop
+  response: { 
+
+  }
+
+--- Structured LangChain  seed=98 ---
+  SUCCESS  leaning=legitimate  analysis_chars=19  elapsed=7.53s
+
+======================================================================
+Summary: 9 calls, 0 failures
+Results by seed:
+  seed=98: 9 ok, 0 fail
+
+Log: results\debug_inference.log
