@@ -1,9 +1,6 @@
 from src.agents.shared_llm import get_llm
 from src.schemas.outputs import ClassificationOutput
 
-llm = get_llm().with_structured_output(ClassificationOutput)
-
-
 def classify_technical(state):
     technical_analysis = state["technical_analysis"]
 
@@ -35,7 +32,7 @@ Technical analysis:
 Express confidence as a decimal between 0.0 and 1.0.
 """
 
-    result = llm.invoke(prompt)
+    result = get_llm().with_structured_output(ClassificationOutput).invoke(prompt)
     return {
         "prediction": result.prediction,
         "confidence": result.confidence

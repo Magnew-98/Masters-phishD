@@ -1,9 +1,6 @@
 from src.agents.shared_llm import get_llm
 from src.schemas.outputs import AnalysisOutput
 
-llm = get_llm().with_structured_output(AnalysisOutput)
-
-
 def analyse_linguistic(state):
     email = state["email"]
 
@@ -38,7 +35,7 @@ Provide a concise analysis covering all five categories. For each, state whether
 Based on your analysis, provide your overall leaning: "phishing" if you found meaningful linguistic anomalies suggesting deceptive or non-authentic authorship, "legitimate" if the text is consistent with genuine business communication, or "uncertain" if the evidence is mixed.
 """
 
-    result = llm.invoke(prompt)
+    result = get_llm().with_structured_output(AnalysisOutput).invoke(prompt)
     return {
         "linguistic_analysis": result.analysis,
         "linguistic_leaning": result.leaning,

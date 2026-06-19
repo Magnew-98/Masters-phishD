@@ -1,9 +1,6 @@
 from src.agents.shared_llm import get_llm
 from src.schemas.outputs import AnalysisOutput
 
-llm = get_llm().with_structured_output(AnalysisOutput)
-
-
 def analyse_technical(state):
     email = state["email"]
 
@@ -40,7 +37,7 @@ Provide a concise technical analysis covering all five categories. Do not classi
 Based on your analysis, provide your overall leaning: "phishing" if you found meaningful technical indicators suggesting deceptive infrastructure, "legitimate" if the email shows no suspicious technical features, or "uncertain" if the evidence is mixed or ambiguous.
 """
 
-    result = llm.invoke(prompt)
+    result = get_llm().with_structured_output(AnalysisOutput).invoke(prompt)
     return {
         "technical_analysis": result.analysis,
         "technical_leaning": result.leaning,

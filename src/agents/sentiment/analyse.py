@@ -1,9 +1,6 @@
 from src.agents.shared_llm import get_llm
 from src.schemas.outputs import AnalysisOutput
 
-llm = get_llm().with_structured_output(AnalysisOutput)
-
-
 def analyse_sentiment(state):
     email = state["email"]
 
@@ -32,7 +29,7 @@ Provide a concise analysis of the three categories. Do not classify the email â€
 Based on your analysis, provide your overall leaning: "phishing" if you found a clearly implausible manipulation tactic, "legitimate" if all emotional features are consistent with normal business communication, or "uncertain" if you are unsure.
 """
 
-    result = llm.invoke(prompt)
+    result = get_llm().with_structured_output(AnalysisOutput).invoke(prompt)
     return {
         "sentiment_analysis": result.analysis,
         "sentiment_leaning": result.leaning,
