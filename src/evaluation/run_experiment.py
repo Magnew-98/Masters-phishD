@@ -2,6 +2,7 @@ import re
 import html
 import json
 import time
+import threading
 import urllib.request
 import argparse
 import pandas as pd
@@ -17,6 +18,7 @@ SPLIT_PATH = RESULTS_DIR / "split.json"
 
 RAG_FRACTION = 0.1
 RANDOM_STATE = 98
+INFERENCE_TIMEOUT = 120  # seconds per invoke — covers multi-specialist graphs (3 LLM calls)
 
 
 def _reload_model(model: str = "llama3.1") -> None:
@@ -174,18 +176,39 @@ def run(app, agent_name: str, batch_size: int = 20, dry_run: bool = False) -> No
     rows = []
     write_header = not RESULTS_PATH.exists()
 
+    def _invoke(email_text):
+        """Run app.invoke on a daemon thread so Ctrl+C always works and
+        a hung inference is abandoned after INFERENCE_TIMEOUT seconds."""
+        result_box, error_box = [None], [None]
+
+        def target():
+            try:
+                result_box[0] = app.invoke({"email": email_text})
+            except Exception as exc:
+                error_box[0] = exc
+
+        t = threading.Thread(target=target, daemon=True)
+        t.start()
+        t.join(timeout=INFERENCE_TIMEOUT)
+        if t.is_alive():
+            raise TimeoutError(f"inference timed out after {INFERENCE_TIMEOUT}s")
+        if error_box[0] is not None:
+            raise error_box[0]
+        return result_box[0]
+
     for _, row in tqdm(batch.iterrows(), total=len(batch)):
+
         result = None
         for attempt in range(3):
             try:
-                result = app.invoke({"email": row["text"]})
+                result = _invoke(row["text"])
                 break
             except Exception:
                 if attempt == 2:
                     tqdm.write(f"  INFO: email_id={row['email_id']} failed 3 attempts — flushing model state and retrying")
                     _reload_model()
                     try:
-                        result = app.invoke({"email": row["text"]})
+                        result = _invoke(row["text"])
                     except Exception:
                         tqdm.write(f"  WARNING: email_id={row['email_id']} failed after flush — deferred to next run")
 
