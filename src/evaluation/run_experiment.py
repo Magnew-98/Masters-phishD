@@ -53,7 +53,7 @@ def _clean_email(text: str) -> str:
     text = re.sub(r'[ \t]+', ' ', text)
     text = re.sub(r'\n{3,}', '\n\n', text)
     text = text.strip()
-    if len(text) > 48000:
+    if len(text) > 30000:
         text = _extract_for_analysis(text)
     return text
 
