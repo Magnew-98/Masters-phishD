@@ -183,12 +183,17 @@ def run(app, agent_name: str, batch_size: int = 20, dry_run: bool = False) -> No
                 break
             except Exception:
                 if attempt == 2:
-                    tqdm.write(f"  INFO: email_id={row['email_id']} failed 3 attempts — flushing model state and retrying")
-                    _reload_model()
-                    try:
-                        result = app.invoke({"email": row["text"]})
-                    except Exception:
-                        tqdm.write(f"  WARNING: email_id={row['email_id']} failed after flush — deferred to next run")
+                    # Two flush-and-retry passes before deferring
+                    for flush_attempt in range(2):
+                        tqdm.write(f"  INFO: email_id={row['email_id']} failed — flush {flush_attempt + 1}/2 and retrying")
+                        _reload_model()
+                        try:
+                            result = app.invoke({"email": row["text"]})
+                            break
+                        except Exception:
+                            pass
+                    if result is None:
+                        tqdm.write(f"  WARNING: email_id={row['email_id']} failed after 2 flushes — deferred to next run")
 
         if result is None:
             continue
