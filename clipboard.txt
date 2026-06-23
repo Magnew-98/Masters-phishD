@@ -16,3 +16,19 @@ Confusion Matrix:
                        Pred Legitimate     Pred Phishing
 Actual Legitimate                12419              1793
 Actual Phishing                   2753              9826
+
+=== linguistic_sentiment | 26791/26791 emails evaluated ===
+Accuracy: 0.8332
+              precision    recall  f1-score   support
+
+  legitimate     0.9516    0.7223    0.8212     14212
+    phishing     0.7534    0.9585    0.8436     12579
+
+    accuracy                         0.8332     26791
+   macro avg     0.8525    0.8404    0.8324     26791
+weighted avg     0.8585    0.8332    0.8318     26791
+
+Confusion Matrix:
+                       Pred Legitimate     Pred Phishing
+Actual Legitimate                10265              3947
+Actual Phishing                    522             12057
