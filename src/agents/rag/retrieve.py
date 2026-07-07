@@ -73,36 +73,39 @@ def _build_index():
     return collection
 
 
+def _query_class(collection, embedding, label: str, n_candidates: int = 5):
+    results = collection.query(
+        query_embeddings=embedding,
+        n_results=n_candidates,
+        where={"label": label},
+        include=["documents", "metadatas", "distances"],
+    )
+    return results["documents"][0], results["metadatas"][0], results["distances"][0]
+
+
 def rag_retrieve(state):
     email = state["email"]
     collection = _get_collection()
     embedder = _get_embedder()
 
     embedding = embedder.encode([email], show_progress_bar=False).tolist()
-    results = collection.query(
-        query_embeddings=embedding,
-        n_results=5,
-        include=["documents", "metadatas", "distances"],
-    )
 
     examples = []
     retrieved_labels = []
     retrieved_ids = []
-    for doc, meta, dist in zip(
-        results["documents"][0],
-        results["metadatas"][0],
-        results["distances"][0],
-    ):
-        if dist < NEAR_DUPLICATE_THRESHOLD:
-            continue
-        snippet = doc[:400].replace("\n", " ").strip()
-        if len(doc) > 400:
-            snippet += "..."
-        examples.append(f"[{meta['label'].upper()}]\n{snippet}")
-        retrieved_labels.append(meta["label"])
-        retrieved_ids.append(str(meta["email_id"]))
-        if len(examples) == 3:
-            break
+
+    for label in ("phishing", "legitimate"):
+        docs, metas, dists = _query_class(collection, embedding, label)
+        for doc, meta, dist in zip(docs, metas, dists):
+            if dist < NEAR_DUPLICATE_THRESHOLD:
+                continue
+            snippet = doc[:400].replace("\n", " ").strip()
+            if len(doc) > 400:
+                snippet += "..."
+            examples.append(f"[{label.upper()}]\n{snippet}")
+            retrieved_labels.append(meta["label"])
+            retrieved_ids.append(str(meta["email_id"]))
+            break  # one closest valid example per class
 
     if not examples:
         return {"rag_context": "", "rag_retrieved_labels": "", "rag_retrieved_ids": ""}
