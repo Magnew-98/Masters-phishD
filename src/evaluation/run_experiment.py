@@ -230,7 +230,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run phishing detection experiment batch")
     parser.add_argument("--components", required=True, nargs='+',
                         help="Agents to run: binary technical sentiment linguistic")
-    parser.add_argument("--rag", action="store_true", help="Prepend RAG retrieval node")
+    parser.add_argument("--rag", action="store_true", help="Prepend dynamic RAG retrieval node")
+    parser.add_argument("--few-shot", action="store_true", help="Prepend fixed few-shot examples (same examples every email)")
     parser.add_argument("--batch-size", type=int, default=20)
     parser.add_argument("--metrics-only", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
@@ -238,13 +239,16 @@ if __name__ == "__main__":
                         help="Run specialist nodes in parallel (needs OLLAMA_NUM_PARALLEL set)")
     args = parser.parse_args()
 
+    if args.rag and args.few_shot:
+        raise SystemExit("Error: --rag and --few-shot are mutually exclusive.")
+
     from src.graph.factory import build_graph, agent_name as make_name
 
     components = args.components
-    name = make_name(components, use_rag=args.rag)
+    name = make_name(components, use_rag=args.rag, few_shot=args.few_shot)
 
     if args.metrics_only:
         print_metrics(name)
     else:
-        app = build_graph(components, use_rag=args.rag, parallel=getattr(args, "parallel", False))
+        app = build_graph(components, use_rag=args.rag, parallel=getattr(args, "parallel", False), few_shot=args.few_shot)
         run(app, agent_name=name, batch_size=args.batch_size, dry_run=args.dry_run)

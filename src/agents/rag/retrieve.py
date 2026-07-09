@@ -5,10 +5,12 @@ from sentence_transformers import SentenceTransformer
 INDEX_DIR = Path("results/rag_index")
 COLLECTION = "emails"
 NEAR_DUPLICATE_THRESHOLD = 0.10  # cosine distance; filters cosine_similarity > 0.90
+EXAMPLES_PER_CLASS = 2           # k=4 total (2 phishing + 2 legitimate)
 
 _client = None
 _collection = None
 _embedder = None
+_fixed_examples = None
 
 
 def _get_embedder():
@@ -73,7 +75,7 @@ def _build_index():
     return collection
 
 
-def _query_class(collection, embedding, label: str, n_candidates: int = 5):
+def _query_class(collection, embedding, label: str, n_candidates: int = 15):
     results = collection.query(
         query_embeddings=embedding,
         n_results=n_candidates,
@@ -96,7 +98,10 @@ def rag_retrieve(state):
 
     for label in ("phishing", "legitimate"):
         docs, metas, dists = _query_class(collection, embedding, label)
+        count = 0
         for doc, meta, dist in zip(docs, metas, dists):
+            if count >= EXAMPLES_PER_CLASS:
+                break
             if dist < NEAR_DUPLICATE_THRESHOLD:
                 continue
             snippet = doc[:400].replace("\n", " ").strip()
@@ -105,7 +110,48 @@ def rag_retrieve(state):
             examples.append(f"[{label.upper()}]\n{snippet}")
             retrieved_labels.append(meta["label"])
             retrieved_ids.append(str(meta["email_id"]))
-            break  # one closest valid example per class
+            count += 1
+
+    if not examples:
+        return {"rag_context": "", "rag_retrieved_labels": "", "rag_retrieved_ids": ""}
+
+    context = "\n\n".join(f"Example {i+1}:\n{ex}" for i, ex in enumerate(examples))
+    return {
+        "rag_context": context,
+        "rag_retrieved_labels": ",".join(retrieved_labels),
+        "rag_retrieved_ids": ",".join(retrieved_ids),
+    }
+
+
+def _get_fixed_examples():
+    global _fixed_examples
+    if _fixed_examples is not None:
+        return _fixed_examples
+
+    from src.evaluation.run_experiment import get_rag_dataframe
+
+    df = get_rag_dataframe()
+    examples = []
+    retrieved_labels = []
+    retrieved_ids = []
+
+    for label in ("phishing", "legitimate"):
+        sampled = df[df["label"] == label].sample(n=EXAMPLES_PER_CLASS, random_state=98)
+        for _, row in sampled.iterrows():
+            doc = row["text"]
+            snippet = doc[:400].replace("\n", " ").strip()
+            if len(doc) > 400:
+                snippet += "..."
+            examples.append(f"[{label.upper()}]\n{snippet}")
+            retrieved_labels.append(label)
+            retrieved_ids.append(str(int(row["email_id"])))
+
+    _fixed_examples = (examples, retrieved_labels, retrieved_ids)
+    return _fixed_examples
+
+
+def rag_retrieve_fixed(state):
+    examples, retrieved_labels, retrieved_ids = _get_fixed_examples()
 
     if not examples:
         return {"rag_context": "", "rag_retrieved_labels": "", "rag_retrieved_ids": ""}

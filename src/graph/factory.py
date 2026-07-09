@@ -21,40 +21,43 @@ def _load(module_path: str, fn_name: str):
     return getattr(importlib.import_module(module_path), fn_name)
 
 
-def build_graph(components: list[str], use_rag: bool = False, parallel: bool = False):
+def build_graph(components: list[str], use_rag: bool = False, parallel: bool = False, few_shot: bool = False):
     for c in components:
         if c not in _agents:
             raise ValueError(f"Unknown component '{c}'. Options: {list(_agents)}")
+
+    use_context = use_rag or few_shot
+    rag_fn = "rag_retrieve_fixed" if few_shot else "rag_retrieve"
 
     workflow = StateGraph(EmailState)
 
     if len(components) == 1:
         component = components[0]
-        agent_name, agent_mod, agent_fn = _agents[component]
+        a_name, agent_mod, agent_fn = _agents[component]
         classifier_name, classifier_mod, classifier_fn = _classifiers[component]
 
-        workflow.add_node(agent_name, _load(agent_mod, agent_fn))
+        workflow.add_node(a_name, _load(agent_mod, agent_fn))
         workflow.add_node(classifier_name, _load(classifier_mod, classifier_fn))
 
-        if use_rag:
-            workflow.add_node("rag_retrieve", _load("src.agents.rag.retrieve", "rag_retrieve"))
+        if use_context:
+            workflow.add_node("rag_retrieve", _load("src.agents.rag.retrieve", rag_fn))
             workflow.add_edge(START, "rag_retrieve")
-            workflow.add_edge("rag_retrieve", agent_name)
+            workflow.add_edge("rag_retrieve", a_name)
         else:
-            workflow.add_edge(START, agent_name)
+            workflow.add_edge(START, a_name)
 
-        workflow.add_edge(agent_name, classifier_name)
+        workflow.add_edge(a_name, classifier_name)
         workflow.add_edge(classifier_name, END)
 
     elif parallel:
         for component in components:
-            agent_name, agent_mod, agent_fn = _agents[component]
-            workflow.add_node(agent_name, _load(agent_mod, agent_fn))
+            a_name, agent_mod, agent_fn = _agents[component]
+            workflow.add_node(a_name, _load(agent_mod, agent_fn))
 
         workflow.add_node("coordinate", _load("src.agents.coordinator.classify", "coordinate"))
 
-        if use_rag:
-            workflow.add_node("rag_retrieve", _load("src.agents.rag.retrieve", "rag_retrieve"))
+        if use_context:
+            workflow.add_node("rag_retrieve", _load("src.agents.rag.retrieve", rag_fn))
             workflow.add_edge(START, "rag_retrieve")
             for component in components:
                 workflow.add_edge("rag_retrieve", _agents[component][0])
@@ -70,8 +73,8 @@ def build_graph(components: list[str], use_rag: bool = False, parallel: bool = F
     else:
         chain = []
 
-        if use_rag:
-            workflow.add_node("rag_retrieve", _load("src.agents.rag.retrieve", "rag_retrieve"))
+        if use_context:
+            workflow.add_node("rag_retrieve", _load("src.agents.rag.retrieve", rag_fn))
             chain.append("rag_retrieve")
 
         for component in components:
@@ -90,8 +93,10 @@ def build_graph(components: list[str], use_rag: bool = False, parallel: bool = F
     return workflow.compile()
 
 
-def agent_name(components: list[str], use_rag: bool = False) -> str:
+def agent_name(components: list[str], use_rag: bool = False, few_shot: bool = False) -> str:
     name = "_".join(components)
-    if use_rag:
+    if few_shot:
+        name += "_fewshot"
+    elif use_rag:
         name += "_rag"
     return name
