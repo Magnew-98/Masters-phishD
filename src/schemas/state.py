@@ -2,6 +2,7 @@ from typing import TypedDict, Optional
 
 class EmailState(TypedDict):
     email: str
+    email_id: Optional[int]
     rag_context: Optional[str]
 
     analysis: Optional[str]

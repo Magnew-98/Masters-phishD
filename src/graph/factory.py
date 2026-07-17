@@ -21,13 +21,21 @@ def _load(module_path: str, fn_name: str):
     return getattr(importlib.import_module(module_path), fn_name)
 
 
-def build_graph(components: list[str], use_rag: bool = False, parallel: bool = False, few_shot: bool = False):
+def build_graph(components: list[str], use_rag: bool = False, parallel: bool = False,
+                few_shot: bool = False, no_filter: bool = False, unrestricted: bool = False):
     for c in components:
         if c not in _agents:
             raise ValueError(f"Unknown component '{c}'. Options: {list(_agents)}")
 
     use_context = use_rag or few_shot
-    rag_fn = "rag_retrieve_fixed" if few_shot else "rag_retrieve"
+    if few_shot:
+        rag_fn = "rag_retrieve_fixed"
+    elif unrestricted:
+        rag_fn = "rag_retrieve_unrestricted"
+    elif no_filter:
+        rag_fn = "rag_retrieve_nofilter"
+    else:
+        rag_fn = "rag_retrieve"
 
     workflow = StateGraph(EmailState)
 
@@ -93,10 +101,15 @@ def build_graph(components: list[str], use_rag: bool = False, parallel: bool = F
     return workflow.compile()
 
 
-def agent_name(components: list[str], use_rag: bool = False, few_shot: bool = False) -> str:
+def agent_name(components: list[str], use_rag: bool = False, few_shot: bool = False,
+               no_filter: bool = False, unrestricted: bool = False) -> str:
     name = "_".join(components)
     if few_shot:
         name += "_fewshot"
     elif use_rag:
         name += "_rag"
+        if unrestricted:
+            name += "_unrestricted"
+        elif no_filter:
+            name += "_nofilter"
     return name

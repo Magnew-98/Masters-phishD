@@ -179,7 +179,7 @@ def run(app, agent_name: str, batch_size: int = 20, dry_run: bool = False) -> No
         result = None
         for attempt in range(3):
             try:
-                result = app.invoke({"email": row["text"]})
+                result = app.invoke({"email": row["text"], "email_id": int(row["email_id"])})
                 break
             except Exception:
                 if attempt == 2:
@@ -188,7 +188,7 @@ def run(app, agent_name: str, batch_size: int = 20, dry_run: bool = False) -> No
                         tqdm.write(f"  INFO: email_id={row['email_id']} failed — flush {flush_attempt + 1}/2 and retrying")
                         _reload_model()
                         try:
-                            result = app.invoke({"email": row["text"]})
+                            result = app.invoke({"email": row["text"], "email_id": int(row["email_id"])})
                             break
                         except Exception:
                             pass
@@ -232,6 +232,8 @@ if __name__ == "__main__":
                         help="Agents to run: binary technical sentiment linguistic")
     parser.add_argument("--rag", action="store_true", help="Prepend dynamic RAG retrieval node")
     parser.add_argument("--few-shot", action="store_true", help="Prepend fixed few-shot examples (same examples every email)")
+    parser.add_argument("--no-filter", action="store_true", help="Disable near-duplicate filter in RAG (use with --rag)")
+    parser.add_argument("--unrestricted", action="store_true", help="Unrestricted nearest-neighbour RAG, no class stratification (use with --rag)")
     parser.add_argument("--batch-size", type=int, default=20)
     parser.add_argument("--metrics-only", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
@@ -239,16 +241,22 @@ if __name__ == "__main__":
                         help="Run specialist nodes in parallel (needs OLLAMA_NUM_PARALLEL set)")
     args = parser.parse_args()
 
-    if args.rag and args.few_shot:
-        raise SystemExit("Error: --rag and --few-shot are mutually exclusive.")
+    if args.few_shot and (args.rag or args.no_filter or args.unrestricted):
+        raise SystemExit("Error: --few-shot is mutually exclusive with --rag, --no-filter, and --unrestricted.")
+    if args.no_filter and args.unrestricted:
+        raise SystemExit("Error: --no-filter and --unrestricted are mutually exclusive.")
+    if (args.no_filter or args.unrestricted) and not args.rag:
+        raise SystemExit("Error: --no-filter and --unrestricted require --rag.")
 
     from src.graph.factory import build_graph, agent_name as make_name
 
     components = args.components
-    name = make_name(components, use_rag=args.rag, few_shot=args.few_shot)
+    name = make_name(components, use_rag=args.rag, few_shot=args.few_shot,
+                     no_filter=args.no_filter, unrestricted=args.unrestricted)
 
     if args.metrics_only:
         print_metrics(name)
     else:
-        app = build_graph(components, use_rag=args.rag, parallel=getattr(args, "parallel", False), few_shot=args.few_shot)
+        app = build_graph(components, use_rag=args.rag, parallel=getattr(args, "parallel", False),
+                          few_shot=args.few_shot, no_filter=args.no_filter, unrestricted=args.unrestricted)
         run(app, agent_name=name, batch_size=args.batch_size, dry_run=args.dry_run)

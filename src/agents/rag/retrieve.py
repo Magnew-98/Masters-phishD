@@ -1,9 +1,12 @@
+import json
 import chromadb
 from pathlib import Path
 from sentence_transformers import SentenceTransformer
 
 INDEX_DIR = Path("results/rag_index")
 COLLECTION = "emails"
+RAG_LOG_PATH = Path("results/rag_retrieval.log")
+
 NEAR_DUPLICATE_THRESHOLD = 0.10  # cosine distance; filters cosine_similarity > 0.90
 EXAMPLES_PER_CLASS = 2           # k=4 total (2 phishing + 2 legitimate)
 
@@ -85,20 +88,43 @@ def _query_class(collection, embedding, label: str, n_candidates: int = 15):
     return results["documents"][0], results["metadatas"][0], results["distances"][0]
 
 
+def _write_log(entry: dict) -> None:
+    RAG_LOG_PATH.parent.mkdir(exist_ok=True)
+    with RAG_LOG_PATH.open("a") as f:
+        f.write(json.dumps(entry) + "\n")
+
+
+def _build_context(examples, retrieved_labels, retrieved_ids):
+    if not examples:
+        return {"rag_context": "", "rag_retrieved_labels": "", "rag_retrieved_ids": ""}
+    context = "\n\n".join(f"Example {i+1}:\n{ex}" for i, ex in enumerate(examples))
+    return {
+        "rag_context": context,
+        "rag_retrieved_labels": ",".join(retrieved_labels),
+        "rag_retrieved_ids": ",".join(retrieved_ids),
+    }
+
+
 def rag_retrieve(state):
+    """Stratified retrieval with near-duplicate filter (default RAG mode).
+    Queries phishing and legitimate separately, filters cosine_similarity > 0.90,
+    returns up to EXAMPLES_PER_CLASS from each class."""
     email = state["email"]
+    email_id = state.get("email_id", "unknown")
     collection = _get_collection()
     embedder = _get_embedder()
-
     embedding = embedder.encode([email], show_progress_bar=False).tolist()
 
-    examples = []
-    retrieved_labels = []
-    retrieved_ids = []
+    examples, retrieved_labels, retrieved_ids = [], [], []
+    log_classes = {}
 
     for label in ("phishing", "legitimate"):
         docs, metas, dists = _query_class(collection, embedding, label)
-        count = 0
+        all_candidates = [
+            {"email_id": int(m["email_id"]), "dist": round(d, 4), "label": m["label"]}
+            for m, d in zip(metas, dists)
+        ]
+        selected, count = [], 0
         for doc, meta, dist in zip(docs, metas, dists):
             if count >= EXAMPLES_PER_CLASS:
                 break
@@ -110,17 +136,102 @@ def rag_retrieve(state):
             examples.append(f"[{label.upper()}]\n{snippet}")
             retrieved_labels.append(meta["label"])
             retrieved_ids.append(str(meta["email_id"]))
+            selected.append({"email_id": int(meta["email_id"]), "dist": round(dist, 4)})
             count += 1
+        log_classes[label] = {
+            "all_candidates": all_candidates,
+            "n_filtered_as_duplicate": sum(1 for c in all_candidates if c["dist"] < NEAR_DUPLICATE_THRESHOLD),
+            "selected": selected,
+        }
 
-    if not examples:
-        return {"rag_context": "", "rag_retrieved_labels": "", "rag_retrieved_ids": ""}
+    _write_log({
+        "email_id": email_id, "mode": "stratified_filtered",
+        "threshold": NEAR_DUPLICATE_THRESHOLD,
+        "total_retrieved": len(examples),
+        "class_counts": {"phishing": retrieved_labels.count("phishing"), "legitimate": retrieved_labels.count("legitimate")},
+        "classes": log_classes,
+    })
+    return _build_context(examples, retrieved_labels, retrieved_ids)
 
-    context = "\n\n".join(f"Example {i+1}:\n{ex}" for i, ex in enumerate(examples))
-    return {
-        "rag_context": context,
-        "rag_retrieved_labels": ",".join(retrieved_labels),
-        "rag_retrieved_ids": ",".join(retrieved_ids),
-    }
+
+def rag_retrieve_nofilter(state):
+    """Stratified retrieval WITHOUT near-duplicate filter.
+    Same class-balanced approach but no similarity threshold applied —
+    the closest examples of each class are always returned regardless of similarity."""
+    email = state["email"]
+    email_id = state.get("email_id", "unknown")
+    collection = _get_collection()
+    embedder = _get_embedder()
+    embedding = embedder.encode([email], show_progress_bar=False).tolist()
+
+    examples, retrieved_labels, retrieved_ids = [], [], []
+    log_classes = {}
+
+    for label in ("phishing", "legitimate"):
+        docs, metas, dists = _query_class(collection, embedding, label)
+        all_candidates = [
+            {"email_id": int(m["email_id"]), "dist": round(d, 4), "label": m["label"]}
+            for m, d in zip(metas, dists)
+        ]
+        selected, count = [], 0
+        for doc, meta, dist in zip(docs, metas, dists):
+            if count >= EXAMPLES_PER_CLASS:
+                break
+            snippet = doc[:400].replace("\n", " ").strip()
+            if len(doc) > 400:
+                snippet += "..."
+            examples.append(f"[{label.upper()}]\n{snippet}")
+            retrieved_labels.append(meta["label"])
+            retrieved_ids.append(str(meta["email_id"]))
+            selected.append({"email_id": int(meta["email_id"]), "dist": round(dist, 4)})
+            count += 1
+        log_classes[label] = {"all_candidates": all_candidates, "selected": selected}
+
+    _write_log({
+        "email_id": email_id, "mode": "stratified_nofilter",
+        "total_retrieved": len(examples),
+        "class_counts": {"phishing": retrieved_labels.count("phishing"), "legitimate": retrieved_labels.count("legitimate")},
+        "classes": log_classes,
+    })
+    return _build_context(examples, retrieved_labels, retrieved_ids)
+
+
+def rag_retrieve_unrestricted(state):
+    """Unrestricted nearest-neighbour retrieval — no class stratification, no filter.
+    Returns the top-k most similar emails regardless of class label.
+    For comparison against stratified approach as per supervisor recommendation."""
+    email = state["email"]
+    email_id = state.get("email_id", "unknown")
+    collection = _get_collection()
+    embedder = _get_embedder()
+    embedding = embedder.encode([email], show_progress_bar=False).tolist()
+
+    n_results = EXAMPLES_PER_CLASS * 2  # same total k as stratified
+    results = collection.query(
+        query_embeddings=embedding,
+        n_results=n_results,
+        include=["documents", "metadatas", "distances"],
+    )
+
+    examples, retrieved_labels, retrieved_ids, candidates = [], [], [], []
+    for doc, meta, dist in zip(
+        results["documents"][0], results["metadatas"][0], results["distances"][0]
+    ):
+        candidates.append({"email_id": int(meta["email_id"]), "dist": round(dist, 4), "label": meta["label"]})
+        snippet = doc[:400].replace("\n", " ").strip()
+        if len(doc) > 400:
+            snippet += "..."
+        examples.append(f"[{meta['label'].upper()}]\n{snippet}")
+        retrieved_labels.append(meta["label"])
+        retrieved_ids.append(str(meta["email_id"]))
+
+    _write_log({
+        "email_id": email_id, "mode": "unrestricted",
+        "total_retrieved": len(examples),
+        "class_counts": {"phishing": retrieved_labels.count("phishing"), "legitimate": retrieved_labels.count("legitimate")},
+        "candidates": candidates,
+    })
+    return _build_context(examples, retrieved_labels, retrieved_ids)
 
 
 def _get_fixed_examples():
@@ -131,9 +242,7 @@ def _get_fixed_examples():
     from src.evaluation.run_experiment import get_rag_dataframe
 
     df = get_rag_dataframe()
-    examples = []
-    retrieved_labels = []
-    retrieved_ids = []
+    examples, retrieved_labels, retrieved_ids = [], [], []
 
     for label in ("phishing", "legitimate"):
         sampled = df[df["label"] == label].sample(n=EXAMPLES_PER_CLASS, random_state=98)
@@ -151,14 +260,7 @@ def _get_fixed_examples():
 
 
 def rag_retrieve_fixed(state):
+    """Fixed few-shot: same EXAMPLES_PER_CLASS phishing + legitimate examples for every email.
+    Randomly sampled from the RAG training set with random_state=98 (reproducible)."""
     examples, retrieved_labels, retrieved_ids = _get_fixed_examples()
-
-    if not examples:
-        return {"rag_context": "", "rag_retrieved_labels": "", "rag_retrieved_ids": ""}
-
-    context = "\n\n".join(f"Example {i+1}:\n{ex}" for i, ex in enumerate(examples))
-    return {
-        "rag_context": context,
-        "rag_retrieved_labels": ",".join(retrieved_labels),
-        "rag_retrieved_ids": ",".join(retrieved_ids),
-    }
+    return _build_context(examples, retrieved_labels, retrieved_ids)
