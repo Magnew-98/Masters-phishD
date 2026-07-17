@@ -64,21 +64,19 @@ Confusion Matrix:
 Actual Legitimate                 3728              1534
 Actual Phishing                    160              4369
 
-On the RAG question: what you are describing makes sense, but I would be precise in how you name it. This is not really “few-shot training” unless you are updating model weights. It is better described as few-shot prompting or retrieval-augmented few-shot prompting / in-context learning.
+=== linguistic_technical_rag | 16791/26791 emails evaluated ===
+Accuracy: 0.6113
+              precision    recall  f1-score   support
 
-I would suggest structuring the experiments like this:
+  legitimate     0.9650    0.2759    0.4291      8891
+    phishing     0.5482    0.9887    0.7053      7900
 
-Zero-shot baseline
-Give the model only the classification instruction and the email.
-Fixed few-shot baseline
-Give the model a small, fixed, balanced set of examples — for example, one phishing and one legitimate email, or a few of each.
-RAG / retrieval-augmented few-shot run Use the training set as the retrieval pool and retrieve the most semantically similar labelled examples for each email being classified. This is the more dynamic version and is probably the most defensible use of RAG in your case.
-I would not call the “one phishing + one legitimate” version RAG unless those examples are being retrieved dynamically per test email. If the same two examples are shown every time, it is simply a few-shot prompt, which is still useful as a baseline.
+    accuracy                         0.6113     16791
+   macro avg     0.7566    0.6323    0.5672     16791
+weighted avg     0.7689    0.6113    0.5591     16791
 
-For the RAG setup, I think the larger training-data retrieval pool is the right direction. Just make sure that:
+Confusion Matrix:
+                       Pred Legitimate     Pred Phishing
+Actual Legitimate                 2453              6438
+Actual Phishing                     89              7811
 
-retrieval only uses the training split, not the test set;
-near duplicates are removed or filtered carefully;
-you report exactly how many examples are retrieved and whether they are balanced by class;
-you keep the prompt, model, temperature, embedding model, and data split consistent across runs.
-A good implementation would be something like: for each test email, retrieve the top k similar labelled examples from the training set, ideally with some class balance, then ask the LLM to classify the target email as phishing or legitimate. You can experiment with different k values, but keep this as an ablation study (i.e., something you do to validate the choice of k) rather than changing too many things at once.
