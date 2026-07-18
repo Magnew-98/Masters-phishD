@@ -196,17 +196,62 @@ def rag_retrieve_nofilter(state):
     return _build_context(examples, retrieved_labels, retrieved_ids)
 
 
-def rag_retrieve_unrestricted(state):
-    """Unrestricted nearest-neighbour retrieval — no class stratification, no filter.
-    Returns the top-k most similar emails regardless of class label.
-    For comparison against stratified approach as per supervisor recommendation."""
+def rag_retrieve_unrestricted_filter(state):
+    """Unrestricted nearest-neighbour retrieval WITH near-duplicate filter.
+    Returns the top-k most similar emails regardless of class, filtering out
+    cosine_similarity > 0.90 to prevent near-duplicate examples dominating."""
     email = state["email"]
     email_id = state.get("email_id", "unknown")
     collection = _get_collection()
     embedder = _get_embedder()
     embedding = embedder.encode([email], show_progress_bar=False).tolist()
 
-    n_results = EXAMPLES_PER_CLASS * 2  # same total k as stratified
+    n_candidates = EXAMPLES_PER_CLASS * 2 * 4  # oversample to allow for filtering
+    results = collection.query(
+        query_embeddings=embedding,
+        n_results=n_candidates,
+        include=["documents", "metadatas", "distances"],
+    )
+
+    examples, retrieved_labels, retrieved_ids, all_candidates = [], [], [], []
+    target = EXAMPLES_PER_CLASS * 2
+
+    for doc, meta, dist in zip(
+        results["documents"][0], results["metadatas"][0], results["distances"][0]
+    ):
+        all_candidates.append({"email_id": int(meta["email_id"]), "dist": round(dist, 4), "label": meta["label"]})
+        if len(examples) >= target:
+            continue
+        if dist < NEAR_DUPLICATE_THRESHOLD:
+            continue
+        snippet = doc[:400].replace("\n", " ").strip()
+        if len(doc) > 400:
+            snippet += "..."
+        examples.append(f"[{meta['label'].upper()}]\n{snippet}")
+        retrieved_labels.append(meta["label"])
+        retrieved_ids.append(str(meta["email_id"]))
+
+    _write_log({
+        "email_id": email_id, "mode": "unrestricted_filter",
+        "threshold": NEAR_DUPLICATE_THRESHOLD,
+        "total_retrieved": len(examples),
+        "class_counts": {"phishing": retrieved_labels.count("phishing"), "legitimate": retrieved_labels.count("legitimate")},
+        "n_filtered": sum(1 for c in all_candidates if c["dist"] < NEAR_DUPLICATE_THRESHOLD),
+        "candidates": all_candidates[:target + 5],
+    })
+    return _build_context(examples, retrieved_labels, retrieved_ids)
+
+
+def rag_retrieve_unrestricted(state):
+    """Unrestricted nearest-neighbour retrieval — no class stratification, no filter.
+    Returns the top-k most similar emails regardless of class label."""
+    email = state["email"]
+    email_id = state.get("email_id", "unknown")
+    collection = _get_collection()
+    embedder = _get_embedder()
+    embedding = embedder.encode([email], show_progress_bar=False).tolist()
+
+    n_results = EXAMPLES_PER_CLASS * 2
     results = collection.query(
         query_embeddings=embedding,
         n_results=n_results,

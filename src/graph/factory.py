@@ -30,8 +30,10 @@ def build_graph(components: list[str], use_rag: bool = False, parallel: bool = F
     use_context = use_rag or few_shot
     if few_shot:
         rag_fn = "rag_retrieve_fixed"
-    elif unrestricted:
+    elif unrestricted and no_filter:
         rag_fn = "rag_retrieve_unrestricted"
+    elif unrestricted:
+        rag_fn = "rag_retrieve_unrestricted_filter"
     elif no_filter:
         rag_fn = "rag_retrieve_nofilter"
     else:
@@ -108,8 +110,10 @@ def agent_name(components: list[str], use_rag: bool = False, few_shot: bool = Fa
         name += "_fewshot"
     elif use_rag:
         name += "_rag"
-        if unrestricted:
-            name += "_unrestricted"
+        if unrestricted and no_filter:
+            name += "_unrestricted_nofilter"
+        elif unrestricted:
+            name += "_unrestricted_filter"
         elif no_filter:
             name += "_nofilter"
     return name
