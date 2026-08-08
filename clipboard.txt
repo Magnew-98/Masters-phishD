@@ -80,3 +80,4 @@ Confusion Matrix:
 Actual Legitimate                 2453              6438
 Actual Phishing                     89              7811
 
+The literature related to phishing detections follows a clear progression. Early approaches used blacklists and URL heuristics which while effective against known attacks, struggle with novel threats and more socially engineered attacks. Machine learning improved generalisation and deep learning enabled automated feature extraction. Tooher and Lallie’s two-stage model is notable for explicitly encoding persuasion principles as detection features providing the ability to pick up on the more semantic elements of phishing emails. LLM’s represent the next step as 
