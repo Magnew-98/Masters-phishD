@@ -24954,3 +24954,6 @@ email_id,agent_name,true_label,prediction,confidence,rag_retrieved_labels,rag_re
 25840,sentiment_technical_linguistic_rag_unrestricted_filter,legitimate,legitimate,0.95,"legitimate,legitimate,legitimate,legitimate","22010,1367,21194,5683"
 2191,sentiment_technical_linguistic_rag_unrestricted_filter,legitimate,legitimate,0.95,"legitimate,legitimate,legitimate,legitimate","2572,2464,2851,2671"
 10240,sentiment_technical_linguistic_rag_unrestricted_filter,phishing,phishing,0.8,"phishing,phishing,phishing,phishing","28583,24016,24578,28626"
+25430,sentiment_technical_linguistic_rag_unrestricted_filter,legitimate,phishing,0.85,"legitimate,legitimate,legitimate,legitimate","6968,5051,7577,5127"
+16878,sentiment_technical_linguistic_rag_unrestricted_filter,legitimate,phishing,0.7,,
+13944,sentiment_technical_linguistic_rag_unrestricted_filter,legitimate,legitimate,0.8,"legitimate,legitimate,legitimate,legitimate","16447,25030,11996,8735"
