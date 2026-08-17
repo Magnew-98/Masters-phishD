@@ -80,3 +80,29 @@ Express confidence as a decimal between 0.0 and 1.0.
         "prediction": result.prediction,
         "confidence": result.confidence,
     }
+
+
+def voting_aggregate(state):
+    """Majority vote across specialist leanings — no LLM call.
+    Replaces the coordinator to isolate its contribution via ablation."""
+    leaning_keys = [
+        "analysis_leaning",
+        "technical_leaning",
+        "sentiment_leaning",
+        "linguistic_leaning",
+    ]
+    phishing, legitimate = 0, 0
+    for key in leaning_keys:
+        leaning = (state.get(key) or "").lower()
+        if "phishing" in leaning:
+            phishing += 1
+        elif "legitimate" in leaning:
+            legitimate += 1
+
+    total = phishing + legitimate
+    if total == 0:
+        return {"prediction": "phishing", "confidence": 0.5}
+
+    if phishing >= legitimate:
+        return {"prediction": "phishing",  "confidence": round(phishing  / total, 2)}
+    return     {"prediction": "legitimate", "confidence": round(legitimate / total, 2)}

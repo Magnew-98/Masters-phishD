@@ -22,7 +22,8 @@ def _load(module_path: str, fn_name: str):
 
 
 def build_graph(components: list[str], use_rag: bool = False, parallel: bool = False,
-                few_shot: bool = False, no_filter: bool = False, unrestricted: bool = False):
+                few_shot: bool = False, no_filter: bool = False, unrestricted: bool = False,
+                voting: bool = False):
     for c in components:
         if c not in _agents:
             raise ValueError(f"Unknown component '{c}'. Options: {list(_agents)}")
@@ -64,7 +65,8 @@ def build_graph(components: list[str], use_rag: bool = False, parallel: bool = F
             a_name, agent_mod, agent_fn = _agents[component]
             workflow.add_node(a_name, _load(agent_mod, agent_fn))
 
-        workflow.add_node("coordinate", _load("src.agents.coordinator.classify", "coordinate"))
+        coord_fn = "voting_aggregate" if voting else "coordinate"
+        workflow.add_node("coordinate", _load("src.agents.coordinator.classify", coord_fn))
 
         if use_context:
             workflow.add_node("rag_retrieve", _load("src.agents.rag.retrieve", rag_fn))
@@ -92,7 +94,8 @@ def build_graph(components: list[str], use_rag: bool = False, parallel: bool = F
             workflow.add_node(a_name, _load(a_mod, a_fn))
             chain.append(a_name)
 
-        workflow.add_node("coordinate", _load("src.agents.coordinator.classify", "coordinate"))
+        coord_fn = "voting_aggregate" if voting else "coordinate"
+        workflow.add_node("coordinate", _load("src.agents.coordinator.classify", coord_fn))
         chain.append("coordinate")
 
         workflow.add_edge(START, chain[0])
@@ -104,7 +107,7 @@ def build_graph(components: list[str], use_rag: bool = False, parallel: bool = F
 
 
 def agent_name(components: list[str], use_rag: bool = False, few_shot: bool = False,
-               no_filter: bool = False, unrestricted: bool = False) -> str:
+               no_filter: bool = False, unrestricted: bool = False, voting: bool = False) -> str:
     name = "_".join(components)
     if few_shot:
         name += "_fewshot"
@@ -116,4 +119,6 @@ def agent_name(components: list[str], use_rag: bool = False, few_shot: bool = Fa
             name += "_unrestricted_filter"
         elif no_filter:
             name += "_nofilter"
+    if voting:
+        name += "_voting"
     return name

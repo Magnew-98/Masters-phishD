@@ -239,6 +239,8 @@ if __name__ == "__main__":
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--parallel", action="store_true",
                         help="Run specialist nodes in parallel (needs OLLAMA_NUM_PARALLEL set)")
+    parser.add_argument("--voting", action="store_true",
+                        help="Replace coordinator LLM with majority vote of specialist leanings (ablation)")
     args = parser.parse_args()
 
     if args.few_shot and (args.rag or args.no_filter or args.unrestricted):
@@ -252,11 +254,12 @@ if __name__ == "__main__":
 
     components = args.components
     name = make_name(components, use_rag=args.rag, few_shot=args.few_shot,
-                     no_filter=args.no_filter, unrestricted=args.unrestricted)
+                     no_filter=args.no_filter, unrestricted=args.unrestricted, voting=args.voting)
 
     if args.metrics_only:
         print_metrics(name)
     else:
         app = build_graph(components, use_rag=args.rag, parallel=getattr(args, "parallel", False),
-                          few_shot=args.few_shot, no_filter=args.no_filter, unrestricted=args.unrestricted)
+                          few_shot=args.few_shot, no_filter=args.no_filter, unrestricted=args.unrestricted,
+                          voting=args.voting)
         run(app, agent_name=name, batch_size=args.batch_size, dry_run=args.dry_run)
